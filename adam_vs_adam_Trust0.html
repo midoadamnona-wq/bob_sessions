@@ -1,0 +1,3829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust 0 — Adam-Adam Story</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  background: #000;
+  color: #fff;
+  font-feature-settings: "ss01" on, "cv11" on;
+}
+
+/* Stage container */
+.stage {
+  position: fixed; inset: 0;
+  display: flex;
+  background: #000;
+}
+
+.laptop {
+  flex: 1;
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+
+.laptop.left { border-right: 2px solid #000; }
+
+.laptop.paused {
+  opacity: 0.5;
+  filter: grayscale(0.7) brightness(0.8);
+}
+
+/* Menubar */
+.menubar {
+  height: 28px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 11px;
+  color: #ddd;
+  font-weight: 500;
+  z-index: 100;
+  position: relative;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.menubar .logo { font-size: 14px; margin-right: 12px; }
+.menubar .device { font-weight: 600; margin-right: auto; }
+.menubar .right-cluster { display: flex; gap: 14px; align-items: center; }
+.menubar .clock { font-variant-numeric: tabular-nums; }
+
+.laptop.paused .menubar .clock::after {
+  content: ' ⏸';
+  margin-left: 4px;
+  color: #888;
+}
+
+/* Desktop area */
+.desktop {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  transition: background 0.8s ease, filter 0.6s ease;
+}
+
+/* Adam's desktop */
+.desktop.adam {
+  background: linear-gradient(180deg, #ffe4c4 0%, #ffa07a 50%, #cd5c5c 100%);
+}
+
+/* Hossam's desktop */
+.desktop.hossam {
+  background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+}
+
+.desktop.hossam.dim {
+  background: linear-gradient(180deg, #1a252f 0%, #0d141a 100%);
+}
+
+/* Memory state for time-rewind */
+.desktop.memory {
+  filter: sepia(0.3) saturate(0.7);
+}
+
+/* Birthday banner */
+.birthday-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.birthday-banner.visible { opacity: 1; }
+
+/* Generic window */
+.window {
+  position: absolute;
+  background: rgba(245,245,247,0.98);
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.2);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(15px) scale(0.97);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.window.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+.window.dark {
+  background: #1f2933;
+  color: #e0e6ed;
+}
+
+.window-titlebar {
+  height: 30px;
+  background: rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.window.dark .window-titlebar {
+  background: rgba(255,255,255,0.05);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
+.window-traffic {
+  display: flex;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.window-traffic .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.window-traffic .red { background: #ff5f56; }
+.window-traffic .yellow { background: #ffbd2e; }
+.window-traffic .green { background: #27c93f; }
+
+.window-title {
+  font-size: 11px;
+  color: #555;
+  font-weight: 500;
+  flex: 1;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.window.dark .window-title { color: #aaa; }
+
+.window-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Tasks panel */
+.tasks-panel {
+  position: absolute;
+  top: 50px;
+  right: 14px;
+  width: 280px;
+  max-height: 75vh;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  padding: 14px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 30;
+}
+
+.tasks-panel.visible { opacity: 1; transform: translateX(0); }
+
+.tasks-school {
+  font-size: 9px;
+  color: #888;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.tasks-title {
+  font-size: 12px;
+  color: #1a1a1a;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  opacity: 0;
+  transform: translateX(8px);
+  animation: taskSlideIn 0.35s ease forwards;
+}
+
+@keyframes taskSlideIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.task-marker {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.task-marker.education { background: #4a90e2; }
+.task-marker.sports { background: #4cd964; }
+.task-marker.family { background: #ff9500; }
+.task-marker.arts { background: #af52de; }
+.task-marker.health { background: #ff3b30; }
+
+.task-time {
+  font-size: 10px;
+  color: #555;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.task-now {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #4cd964;
+  border-radius: 50%;
+  margin-left: 4px;
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+.task-text {
+  font-size: 10px;
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* Teams call window */
+.teams-window {
+  background: #2b2b3d;
+  color: #e8e8e8;
+}
+
+.teams-window .window-titlebar {
+  background: #1f1f2e;
+  border-bottom: 1px solid #14141e;
+}
+
+.teams-window .window-title { color: #b8b8b8; }
+
+.teams-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a2a;
+}
+
+.teams-header {
+  padding: 8px 14px;
+  background: #252537;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #14141e;
+  flex-shrink: 0;
+}
+
+.teams-meeting-name {
+  font-size: 11px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.teams-participants-count {
+  font-size: 9px;
+  color: #888;
+  margin-left: auto;
+}
+
+.teams-timer {
+  font-size: 10px;
+  color: #4dd4ff;
+  font-variant-numeric: tabular-nums;
+  background: rgba(77,212,255,0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.teams-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 6px;
+  background: #14141e;
+}
+
+.teams-tile {
+  aspect-ratio: 4/3;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teams-tile-avatar {
+  width: 50%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Avatar gradients */
+.tile-michael { background: linear-gradient(135deg, #c0c0d8 0%, #4a90e2 100%); }
+.tile-michael .teams-tile-avatar { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); }
+
+.tile-ann { background: linear-gradient(135deg, #4cd964 0%, #2a8d3a 100%); }
+.tile-ann .teams-tile-avatar { background: rgba(0,0,0,0.2); }
+
+.tile-hazem { background: linear-gradient(135deg, #af52de 0%, #ffd700 100%); }
+.tile-hazem .teams-tile-avatar { background: rgba(0,0,0,0.25); }
+
+.tile-sarah { background: linear-gradient(135deg, #ff3b30 0%, #1a1a1a 100%); }
+.tile-sarah .teams-tile-avatar { background: rgba(255,255,255,0.15); }
+
+.tile-david { background: linear-gradient(135deg, #5ac8c8 0%, #ffd700 100%); }
+.tile-david .teams-tile-avatar { background: rgba(0,0,0,0.2); }
+
+.tile-adam { background: linear-gradient(135deg, #ffd700 0%, #ff3b30 100%); }
+.tile-adam .teams-tile-avatar { background: rgba(0,0,0,0.2); }
+
+.teams-tile-info {
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.65);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.teams-tile-name {
+  font-size: 9px;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.teams-tile-title {
+  font-size: 7px;
+  color: #aaa;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+/* Teams chat panel */
+.teams-chat {
+  flex: 1;
+  background: #14141e;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  animation: msgArrive 0.4s ease forwards;
+}
+
+@keyframes msgArrive {
+  to { opacity: 1; }
+}
+
+.chat-author {
+  font-size: 9px;
+  font-weight: 600;
+  color: #4dd4ff;
+}
+
+.chat-author.lead { color: #ffd700; }
+.chat-author.adam { color: #ff8a65; }
+
+.chat-text {
+  font-size: 10px;
+  color: #ddd;
+  line-height: 1.4;
+  background: #252537;
+  padding: 5px 9px;
+  border-radius: 8px;
+  display: inline-block;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+/* WhatsApp notification */
+.whatsapp-notif {
+  position: absolute;
+  top: 50px;
+  right: 14px;
+  width: 320px;
+  background: rgba(40,40,46,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 60;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.whatsapp-notif.visible { opacity: 1; transform: translateY(0); }
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.notif-icon {
+  width: 22px;
+  height: 22px;
+  background: #25d366;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.notif-app-name {
+  font-size: 9px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.notif-from {
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.notif-body {
+  font-size: 11px;
+  color: #ccc;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.notif-reply {
+  font-size: 11px;
+  color: #4dd4ff;
+  background: rgba(77,212,255,0.08);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 4px;
+  border-left: 2px solid #4dd4ff;
+}
+
+/* Trust 0 brand notification (small, ignored) */
+.trust0-notif {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  width: 240px;
+  background: rgba(14,20,25,0.92);
+  backdrop-filter: blur(20px);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  border: 1px solid rgba(77,212,255,0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 55;
+}
+
+.trust0-notif.visible { opacity: 0.85; transform: translateY(0); }
+
+.trust0-notif-app {
+  font-size: 9px;
+  color: #4dd4ff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.trust0-notif-text {
+  font-size: 11px;
+  color: #ddd;
+  line-height: 1.4;
+}
+
+/* Subtle text overlay */
+.subtle-text {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  font-style: italic;
+  text-align: center;
+  letter-spacing: 0.3px;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 70;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  max-width: 80%;
+}
+
+.subtle-text.visible { opacity: 0.9; }
+
+/* Title cards */
+.title-card {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+.title-card.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title-line-1 {
+  font-size: 64px;
+  font-weight: 200;
+  letter-spacing: 4px;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.title-line-2 {
+  font-size: 32px;
+  font-weight: 200;
+  letter-spacing: 3px;
+  color: #fff;
+  margin-bottom: 30px;
+}
+
+.title-line-3 {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* Mid-film title cards */
+.flash-card {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 180;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.flash-card.visible { opacity: 1; }
+
+.flash-card-text {
+  font-size: 36px;
+  font-weight: 200;
+  letter-spacing: 4px;
+  color: #ddd;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.flash-card-sub {
+  font-size: 13px;
+  color: #888;
+  letter-spacing: 3px;
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+
+/* Browser tab side window */
+.browser-window {
+  background: #fafafa;
+  font-size: 10px;
+}
+
+.browser-tabs {
+  height: 26px;
+  background: #e8e8e8;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 8px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.browser-tab {
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 6px 6px 0 0;
+  font-size: 9px;
+  color: #333;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browser-content {
+  padding: 12px 14px;
+  background: #fff;
+  flex: 1;
+  overflow: hidden;
+}
+
+.browser-title {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.browser-product {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.browser-product-img {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #2a2a2a, #555);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.browser-product-info { flex: 1; }
+.browser-product-name { font-size: 10px; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
+.browser-product-price { font-size: 11px; color: #1d4ed8; font-weight: 600; margin-top: 3px; }
+
+.browser-cart-btn {
+  background: #1d4ed8;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* Email window */
+.email-window { background: #fafafa; }
+
+.email-header {
+  padding: 10px 14px;
+  background: #f0f0f3;
+  border-bottom: 1px solid #e0e0e3;
+  flex-shrink: 0;
+}
+
+.email-from { font-size: 11px; color: #1a1a1a; font-weight: 600; }
+.email-time { font-size: 10px; color: #888; margin-left: auto; }
+.email-from-line { display: flex; align-items: center; }
+.email-subject { font-size: 13px; color: #c00; font-weight: 700; margin-top: 6px; letter-spacing: 0.2px; }
+.email-subject.warn { color: #d24726; }
+.email-subject.good { color: #2a8d3a; }
+
+.email-body {
+  padding: 14px;
+  font-size: 11px;
+  color: #333;
+  line-height: 1.5;
+  background: #fff;
+  flex: 1;
+  overflow: hidden;
+}
+
+.email-body strong { color: #1a1a1a; font-weight: 600; }
+.email-body .red { color: #d24726; font-weight: 700; }
+.email-body .green { color: #2a8d3a; font-weight: 700; }
+.email-body ul { margin: 6px 0 8px 14px; }
+.email-body li { margin: 3px 0; }
+.email-body p { margin: 6px 0; }
+
+/* Outlook notification (small popup) */
+.outlook-notif {
+  position: absolute;
+  top: 50px;
+  right: 14px;
+  width: 340px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 65;
+  border-left: 4px solid #d24726;
+}
+
+.outlook-notif.visible { opacity: 1; transform: translateY(0); }
+
+.outlook-notif.bonus { border-left-color: #2a8d3a; }
+.outlook-notif.legal { border-left-color: #af52de; }
+
+.outlook-from {
+  font-size: 9px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.outlook-subject {
+  font-size: 12px;
+  color: #c00;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.outlook-subject.good { color: #2a8d3a; }
+.outlook-subject.legal { color: #5a2d8d; }
+
+.outlook-preview {
+  font-size: 10px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Copilot window */
+.copilot-window { background: #f5f5f8; }
+
+.copilot-header {
+  padding: 10px 14px;
+  background: linear-gradient(90deg, #6b46c1, #4dd4ff);
+  color: white;
+  flex-shrink: 0;
+}
+
+.copilot-header-title { font-size: 12px; font-weight: 700; }
+.copilot-header-sub { font-size: 9px; opacity: 0.85; }
+
+.copilot-body {
+  padding: 12px 14px;
+  font-size: 11px;
+  color: #333;
+  line-height: 1.5;
+  background: #fff;
+  flex: 1;
+  overflow: hidden;
+}
+
+.copilot-body strong { color: #1a1a1a; }
+.copilot-suggestion { padding: 3px 0; color: #2a8d3a; font-size: 10px; }
+.copilot-emphasis {
+  background: #fff8dc;
+  padding: 6px 9px;
+  border-radius: 5px;
+  margin: 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d24726;
+  border-left: 3px solid #d24726;
+}
+.copilot-warn { font-size: 10px; color: #888; margin: 6px 0; font-style: italic; }
+.copilot-rate { font-size: 11px; color: #555; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+.copilot-stars { color: #ffd700; font-size: 14px; letter-spacing: 2px; }
+
+/* Starbucks window */
+.starbucks-window { background: #00704a; color: white; }
+.starbucks-header { padding: 10px 14px; background: #006241; flex-shrink: 0; }
+.starbucks-title { font-size: 13px; font-weight: 700; letter-spacing: 0.3px; }
+
+.starbucks-body { padding: 12px 14px; font-size: 11px; color: white; flex: 1; }
+.starbucks-order {
+  background: rgba(255,255,255,0.1);
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.starbucks-item { font-size: 12px; font-weight: 600; }
+.starbucks-qty { font-size: 24px; font-weight: 700; margin-top: 4px; }
+
+.starbucks-chat { margin-top: 10px; }
+.starbucks-msg {
+  font-size: 10px;
+  background: rgba(255,255,255,0.12);
+  padding: 5px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.starbucks-msg.me { background: rgba(255,255,255,0.25); align-self: flex-end; }
+.starbucks-receipt {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+/* WhatsApp window */
+.whatsapp-window { background: #efeae2; }
+
+.wa-header {
+  background: #075e54;
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.wa-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65, #f4a261);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+
+.wa-avatar.don { background: linear-gradient(135deg, #444, #888); }
+.wa-avatar.team { background: linear-gradient(135deg, #4a90e2, #5a3aaa); }
+.wa-avatar.ann { background: linear-gradient(135deg, #ff7eb6, #d63384); }
+.wa-avatar.adam { background: linear-gradient(135deg, #ffd700, #ff3b30); }
+.wa-avatar.hr { background: linear-gradient(135deg, #6c757d, #343a40); }
+
+.wa-contact-name { font-size: 13px; font-weight: 600; }
+.wa-contact-status { font-size: 10px; opacity: 0.85; }
+
+.wa-messages {
+  padding: 10px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #efeae2;
+  overflow: hidden;
+}
+
+.wa-msg {
+  max-width: 85%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  opacity: 0;
+  animation: msgArrive 0.35s ease forwards;
+  position: relative;
+}
+
+.wa-msg.received {
+  background: white;
+  align-self: flex-start;
+  color: #303030;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+}
+
+.wa-msg.sent {
+  background: #d9fdd3;
+  align-self: flex-end;
+  color: #111;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+}
+
+.wa-msg .author {
+  font-size: 9px;
+  font-weight: 700;
+  color: #075e54;
+  margin-bottom: 2px;
+}
+
+.wa-msg .time {
+  font-size: 8px;
+  color: #666;
+  margin-top: 3px;
+  text-align: right;
+}
+
+/* KPI document */
+.kpi-doc {
+  background: white;
+  padding: 14px 18px;
+  font-size: 10px;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+}
+
+.kpi-doc-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #1a1a1a; }
+.kpi-section { margin: 10px 0; }
+.kpi-section-title { font-size: 11px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+.kpi-clause { font-size: 10px; line-height: 1.5; color: #333; }
+.kpi-highlight { background: #fff8dc; padding: 0 3px; border-bottom: 2px solid #ffd700; font-weight: 600; }
+.kpi-signature { margin-top: 14px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 10px; color: #666; }
+.kpi-signature-line { font-style: italic; color: #1a1a1a; font-weight: 700; margin-top: 4px; font-size: 12px; }
+
+/* Trust 0 platform */
+.trust0-window {
+  background: #0e1419;
+  color: #e0e6ed;
+}
+
+.trust0-header {
+  background: linear-gradient(90deg, #0a4d80, #0a7080);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.trust0-logo { font-weight: 800; font-size: 14px; letter-spacing: 1.5px; color: white; }
+.trust0-tagline { font-size: 10px; opacity: 0.85; letter-spacing: 0.5px; }
+.trust0-user { margin-left: auto; font-size: 11px; display: flex; align-items: center; gap: 8px; }
+
+.trust0-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f4a261, #e76f51);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trust0-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.trust0-sidebar {
+  width: 130px;
+  background: #0a1014;
+  padding: 12px 6px;
+  border-right: 1px solid #1a2530;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.trust0-nav-section {
+  font-size: 8px;
+  color: #4a5560;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 6px 10px 4px;
+  margin-top: 6px;
+}
+
+.trust0-nav-item {
+  padding: 6px 10px;
+  font-size: 10px;
+  color: #8a9aaa;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.trust0-nav-item.active { background: #1a3548; color: #4dd4ff; }
+
+.trust0-main {
+  flex: 1;
+  padding: 14px 18px;
+  overflow: hidden;
+}
+
+.trust0-main-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.trust0-main-meta { font-size: 9px; color: #6a7a8a; margin-bottom: 12px; }
+
+.trust0-button {
+  background: linear-gradient(135deg, #1d4ed8, #0e7490);
+  color: white;
+  padding: 9px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(29,78,216,0.4);
+  border: none;
+  cursor: pointer;
+}
+
+.trust0-button.send {
+  background: #25d366;
+  margin-top: 10px;
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+.trust0-thinking {
+  font-size: 10px;
+  color: #4dd4ff;
+  background: rgba(77,212,255,0.06);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trust0-thinking::before {
+  content: '◆';
+  animation: pulse 1s infinite;
+}
+
+.trust0-result {
+  background: #131a22;
+  border-radius: 8px;
+  padding: 12px 14px;
+  border-left: 3px solid #4dd4ff;
+}
+
+.trust0-result-title {
+  font-size: 11px;
+  color: #4dd4ff;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.trust0-chain-step {
+  font-size: 10px;
+  color: #c8d4e0;
+  line-height: 1.5;
+  padding: 4px 0;
+  border-bottom: 1px solid #1a2530;
+}
+
+.trust0-chain-step .step-num {
+  color: #4dd4ff;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.trust0-chain-step .controlled {
+  color: #d24726;
+  font-weight: 600;
+}
+
+.trust0-key-finding {
+  background: rgba(255,180,0,0.08);
+  border: 1px solid rgba(255,180,0,0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.trust0-key-finding .label {
+  font-size: 10px;
+  color: #ffb400;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.trust0-key-line {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.trust0-key-line .check { color: #4cd964; }
+.trust0-key-line .x { color: #d24726; }
+
+.trust0-pattern-flag {
+  font-size: 10px;
+  color: #ffb400;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: rgba(255,180,0,0.05);
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* Demo specific */
+.demo-stage {
+  position: fixed;
+  inset: 0;
+  background: #0a1014;
+  display: none;
+  flex-direction: column;
+  z-index: 150;
+}
+
+.demo-stage.active { display: flex; }
+
+.demo-header {
+  background: linear-gradient(90deg, #0a4d80, #0a7080);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.demo-logo {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: white;
+}
+
+.demo-tagline {
+  font-size: 12px;
+  opacity: 0.85;
+  letter-spacing: 0.5px;
+}
+
+.demo-stage-num {
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-content {
+  flex: 1;
+  padding: 30px 60px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.demo-title {
+  font-size: 24px;
+  font-weight: 300;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.demo-title.visible { opacity: 1; }
+
+.demo-subtitle {
+  font-size: 14px;
+  color: #6a7a8a;
+  margin-bottom: 30px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.demo-subtitle.visible { opacity: 1; }
+
+.demo-caption {
+  position: absolute;
+  bottom: 30px;
+  left: 60px;
+  right: 60px;
+  font-size: 14px;
+  color: #4dd4ff;
+  font-style: italic;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.demo-caption.visible { opacity: 1; }
+
+/* Ingestion animation */
+.ingestion-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+}
+
+.source-box {
+  background: #1a2530;
+  border-radius: 12px;
+  padding: 30px 40px;
+  text-align: center;
+  border: 1px solid #2a3540;
+}
+
+.source-icon { font-size: 48px; margin-bottom: 12px; }
+.source-label { font-size: 12px; color: #8a9aaa; letter-spacing: 0.5px; }
+
+.flying-spreadsheet {
+  background: #fff;
+  width: 80px;
+  height: 100px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #2a8d3a;
+  position: absolute;
+  opacity: 0;
+  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flying-spreadsheet.flying {
+  opacity: 1;
+}
+
+.platform-target {
+  background: linear-gradient(135deg, #0a4d80, #0a7080);
+  border-radius: 12px;
+  padding: 30px 40px;
+  text-align: center;
+  position: relative;
+  min-width: 200px;
+}
+
+.platform-target-logo {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: white;
+}
+
+.ingestion-results {
+  margin-top: 20px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.8;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.ingestion-results.visible { opacity: 1; }
+
+.ingestion-results .check { color: #4cd964; font-weight: 700; }
+
+/* Chain tree */
+.chain-tree {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+  position: relative;
+}
+
+.chain-level {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.chain-level.visible { opacity: 1; }
+
+.chain-node {
+  background: #1a2530;
+  border: 1px solid #2a3540;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #c8d4e0;
+  text-align: center;
+  position: relative;
+  min-width: 100px;
+}
+
+.chain-node.ceo { background: linear-gradient(135deg, #6b46c1, #4dd4ff); color: white; font-weight: 700; }
+.chain-node.exec { background: #1a3548; border-color: #4dd4ff; color: #fff; }
+.chain-node.exec.don { background: linear-gradient(135deg, #2a3540, #1a3548); border-color: #4dd4ff; }
+.chain-node.exec.michael { background: linear-gradient(135deg, #2a1530, #4d1a3a); border-color: #d24726; }
+.chain-node.dept { background: #1a2530; }
+.chain-node.individual { background: #131a22; font-size: 10px; padding: 6px 10px; }
+.chain-node.individual.hossam { background: linear-gradient(135deg, #1a3548, #0a4d80); border-color: #4dd4ff; color: white; font-weight: 600; }
+
+.chain-node-role {
+  font-size: 8px;
+  color: #6a7a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.chain-node.ceo .chain-node-role { color: rgba(255,255,255,0.85); }
+
+.chain-node .approve-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #4cd964;
+  color: white;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 2px 8px rgba(76,217,100,0.5);
+}
+
+.chain-node .approve-badge.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.chain-node .warn-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ffb400;
+  color: #1a1a1a;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.chain-node .warn-badge.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.chain-arrow-down {
+  width: 2px;
+  height: 16px;
+  background: linear-gradient(180deg, #4dd4ff, #2a3540);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.chain-arrow-down.visible { opacity: 0.6; }
+
+/* Q3 Simulation */
+.q3-sim {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.q3-sim-header {
+  font-size: 16px;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.q3-sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+}
+
+.q3-universe {
+  background: #131a22;
+  border-radius: 12px;
+  padding: 18px 22px;
+  border: 2px solid #1a2530;
+  transition: all 0.5s ease;
+}
+
+.q3-universe.bad {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.q3-universe.good {
+  border-color: #4cd964;
+  box-shadow: 0 0 30px rgba(76,217,100,0.15);
+}
+
+.q3-universe-label {
+  font-size: 11px;
+  color: #6a7a8a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.q3-universe.good .q3-universe-label { color: #4cd964; }
+
+.q3-line {
+  font-size: 13px;
+  color: #c8d4e0;
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.q3-line .v-good { color: #4cd964; font-weight: 700; }
+.q3-line .v-bad { color: #d24726; font-weight: 700; }
+.q3-line .label { color: #8a9aaa; }
+
+.q3-impact {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #2a3540;
+}
+
+.q3-impact-label {
+  font-size: 10px;
+  color: #6a7a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.q3-impact-line {
+  font-size: 12px;
+  margin: 4px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.q3-impact-line .name { color: #c8d4e0; }
+.q3-impact-line .value { font-weight: 700; }
+.q3-impact-line .value.bad { color: #d24726; }
+.q3-impact-line .value.minor { color: #ffb400; }
+.q3-impact-line .value.major { color: #d24726; }
+
+/* Final closing */
+.closing-stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 250;
+}
+
+.closing-stage.active { display: flex; }
+
+.closing-element {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  text-align: center;
+}
+
+.closing-element.visible { opacity: 1; }
+
+.closing-teams-window {
+  background: #2b2b3d;
+  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  width: 480px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+
+.closing-teams-header {
+  background: #1f1f2e;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: #aaa;
+  border-bottom: 1px solid #14141e;
+}
+
+.closing-teams-msg {
+  padding: 16px 18px;
+  background: #14141e;
+}
+
+.closing-teams-author {
+  font-size: 11px;
+  color: #ffd700;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.closing-teams-text {
+  font-size: 14px;
+  color: #fff;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.godfather-quote {
+  font-size: 32px;
+  font-weight: 200;
+  color: #fff;
+  letter-spacing: 1px;
+  font-style: italic;
+  text-align: center;
+  max-width: 800px;
+  line-height: 1.4;
+}
+
+.godfather-attribution {
+  font-size: 14px;
+  color: #888;
+  margin-top: 24px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.final-logo {
+  font-size: 80px;
+  font-weight: 200;
+  letter-spacing: 6px;
+  color: #fff;
+}
+
+/* Subtle text overlay for transitions */
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 170;
+  background: rgba(0,0,0,0.92);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.transition-overlay.visible { opacity: 1; }
+
+.transition-overlay-text {
+  font-size: 22px;
+  font-weight: 300;
+  color: #fff;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 80%;
+  letter-spacing: 0.5px;
+}
+
+.transition-overlay-text strong {
+  font-weight: 600;
+}
+
+/* Controls */
+.controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0,0,0,0.7);
+  padding: 8px 14px;
+  border-radius: 22px;
+  font-size: 11px;
+  color: #aaa;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.controls:hover { opacity: 1; }
+
+.ctrl-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctrl-btn:hover { background: rgba(255,255,255,0.15); }
+
+.scene-indicator {
+  font-size: 10px;
+  color: #aaa;
+  padding: 0 8px;
+  font-variant-numeric: tabular-nums;
+  min-width: 90px;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Opening title card -->
+<div class="title-card" id="title-card">
+  <div class="title-line-1">Trust 0</div>
+  <div class="title-line-2">Adam-Adam Story</div>
+  <div class="title-line-3">Same Day · Different Closure</div>
+</div>
+
+<!-- Mid-film flash card (for time rewinds) -->
+<div class="flash-card" id="flash-card">
+  <div class="flash-card-text" id="flash-text">6 Months Ago</div>
+  <div class="flash-card-sub" id="flash-sub">January 2026</div>
+</div>
+
+<!-- Transition overlay (between scenes/film/demo) -->
+<div class="transition-overlay" id="transition-overlay">
+  <div class="transition-overlay-text" id="transition-text"></div>
+</div>
+
+<!-- Main film stage -->
+<div class="stage" id="stage">
+  <!-- LEFT LAPTOP -->
+  <div class="laptop left" id="laptop-left">
+    <div class="menubar">
+      <span class="logo">🍎</span>
+      <span class="device" id="device-left">Adam's MacBook</span>
+      <span class="right-cluster">
+        <span class="app" id="app-left">Teams</span>
+        <span class="battery" id="battery-left">🔋 87%</span>
+        <span class="clock" id="clock-left">3:30 PM Thu</span>
+      </span>
+    </div>
+    <div class="desktop adam" id="desktop-left">
+      <div class="birthday-banner" id="banner-left">🎂 Happy 12th Birthday Adam</div>
+    </div>
+  </div>
+
+  <!-- RIGHT LAPTOP -->
+  <div class="laptop right" id="laptop-right">
+    <div class="menubar">
+      <span class="logo">🍎</span>
+      <span class="device" id="device-right">Adam's MacBook</span>
+      <span class="right-cluster">
+        <span class="app" id="app-right">Teams</span>
+        <span class="battery" id="battery-right">🔋 87%</span>
+        <span class="clock" id="clock-right">3:30 PM Thu</span>
+      </span>
+    </div>
+    <div class="desktop adam" id="desktop-right">
+      <div class="birthday-banner" id="banner-right">🎂 Happy 12th Birthday Adam</div>
+    </div>
+  </div>
+</div>
+
+<!-- Demo stage (hidden initially) -->
+<div class="demo-stage" id="demo-stage">
+  <div class="demo-header">
+    <div>
+      <div class="demo-logo">TRUST 0</div>
+      <div class="demo-tagline">KPI integrity for the people who do the work</div>
+    </div>
+    <div class="demo-stage-num" id="demo-stage-label">Stage 1 of 5</div>
+  </div>
+  <div class="demo-content" id="demo-content">
+    <!-- Content rendered dynamically per stage -->
+  </div>
+</div>
+
+<!-- Final closing stage (hidden initially) -->
+<div class="closing-stage" id="closing-stage">
+  <div class="closing-element" id="closing-1">
+    <div class="closing-teams-window">
+      <div class="closing-teams-header">Microsoft Teams — Don Corleone — Manager</div>
+      <div class="closing-teams-msg">
+        <div class="closing-teams-author">Don Corleone</div>
+        <div class="closing-teams-text">"Sign the KPI. Or we reassess your role. Same thing in different words."</div>
+      </div>
+    </div>
+  </div>
+  <div class="closing-element" id="closing-2" style="display:none;">
+    <div class="godfather-quote">"I'm going to make him an offer he can't refuse."</div>
+    <div class="godfather-attribution">— Don Corleone</div>
+  </div>
+  <div class="closing-element" id="closing-3" style="display:none;">
+    <div class="final-logo">Trust 0</div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" onclick="restart()" title="Restart">↺</button>
+  <button class="ctrl-btn" onclick="prevScene()" title="Previous scene">⏮</button>
+  <button class="ctrl-btn" id="pause-btn" onclick="togglePause()" title="Pause/Play">⏸</button>
+  <span class="scene-indicator" id="scene-indicator">Title</span>
+  <button class="ctrl-btn" onclick="nextScene()" title="Next scene">⏭</button>
+</div>
+
+<script>
+// =============================================================
+// SCENE CONTROLLER — Trust 0 Adam-Adam Story
+// =============================================================
+
+let currentScene = 0;
+let sceneTimer = null;
+let timeoutHandles = [];
+let isPaused = false;
+let pausedTimeouts = []; // {fn, remaining} for pause/resume
+
+// Helper to track timeouts so we can cancel on scene jump
+function scheduleAt(ms, fn) {
+  if (isPaused) {
+    pausedTimeouts.push({ fn, remaining: ms });
+    return null;
+  }
+  const startTime = Date.now();
+  const handle = setTimeout(() => {
+    // remove from tracking when fired
+    timeoutHandles = timeoutHandles.filter(h => h.handle !== handle);
+    fn();
+  }, ms);
+  timeoutHandles.push({ handle, fn, startTime, ms });
+  return handle;
+}
+
+function cancelAllTimeouts() {
+  timeoutHandles.forEach(h => clearTimeout(h.handle));
+  timeoutHandles = [];
+  pausedTimeouts = [];
+  if (sceneTimer) clearTimeout(sceneTimer);
+}
+
+function togglePause() {
+  if (!isPaused) {
+    // Pause: clear all pending timeouts and store remaining time
+    isPaused = true;
+    const now = Date.now();
+    pausedTimeouts = timeoutHandles.map(h => ({
+      fn: h.fn,
+      remaining: Math.max(0, h.ms - (now - h.startTime))
+    }));
+    timeoutHandles.forEach(h => clearTimeout(h.handle));
+    timeoutHandles = [];
+    if (sceneTimer) { clearTimeout(sceneTimer); }
+    // Pause CSS animations globally
+    document.body.style.animationPlayState = 'paused';
+    document.querySelectorAll('*').forEach(el => {
+      el.style.animationPlayState = 'paused';
+    });
+    const pb = $('pause-btn');
+    if (pb) pb.textContent = '▶';
+  } else {
+    // Resume
+    isPaused = false;
+    const toResume = [...pausedTimeouts];
+    pausedTimeouts = [];
+    // Resume CSS animations
+    document.body.style.animationPlayState = '';
+    document.querySelectorAll('*').forEach(el => {
+      el.style.animationPlayState = '';
+    });
+    toResume.forEach(p => scheduleAt(p.remaining, p.fn));
+    const pb = $('pause-btn');
+    if (pb) pb.textContent = '⏸';
+  }
+}
+
+// Helpers
+function $(id) { return document.getElementById(id); }
+function setLeftClock(t) { $('clock-left').textContent = t; }
+function setRightClock(t) { $('clock-right').textContent = t; }
+function setBothClocks(t) { setLeftClock(t); setRightClock(t); }
+function setLeftBattery(b) { $('battery-left').textContent = '🔋 ' + b + '%'; }
+function setRightBattery(b) { $('battery-right').textContent = '🔋 ' + b + '%'; }
+function setLeftDevice(s) { $('device-left').textContent = s; }
+function setRightDevice(s) { $('device-right').textContent = s; }
+function setBothDevices(s) { setLeftDevice(s); setRightDevice(s); }
+function setLeftApp(a) { $('app-left').textContent = a; }
+function setRightApp(a) { $('app-right').textContent = a; }
+function setBothApps(a) { setLeftApp(a); setRightApp(a); }
+
+function pauseLeft() { $('laptop-left').classList.add('paused'); }
+function resumeLeft() { $('laptop-left').classList.remove('paused'); }
+function pauseRight() { $('laptop-right').classList.add('paused'); }
+function resumeRight() { $('laptop-right').classList.remove('paused'); }
+function unpauseAll() { resumeLeft(); resumeRight(); }
+
+function clearLeftDesktop() {
+  const d = $('desktop-left');
+  d.querySelectorAll('.window, .whatsapp-notif, .outlook-notif, .tasks-panel, .trust0-notif, .subtle-text').forEach(el => el.remove());
+}
+function clearRightDesktop() {
+  const d = $('desktop-right');
+  d.querySelectorAll('.window, .whatsapp-notif, .outlook-notif, .tasks-panel, .trust0-notif, .subtle-text').forEach(el => el.remove());
+}
+function clearBoth() { clearLeftDesktop(); clearRightDesktop(); }
+
+function setLeftDesktop(cls) { $('desktop-left').className = 'desktop ' + cls; }
+function setRightDesktop(cls) { $('desktop-right').className = 'desktop ' + cls; }
+function setBothDesktops(cls) { setLeftDesktop(cls); setRightDesktop(cls); }
+
+function showBanner(side, show) {
+  $('banner-' + side).classList.toggle('visible', show);
+}
+
+function setSceneIndicator(label) {
+  $('scene-indicator').textContent = label;
+}
+
+// Generic add element to desktop
+function addToDesktop(side, html) {
+  const d = $('desktop-' + side);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html.trim();
+  const el = wrapper.firstElementChild;
+  d.appendChild(el);
+  setTimeout(() => el.classList.add('visible'), 50);
+  return el;
+}
+
+function addToBoth(html) {
+  const left = addToDesktop('left', html);
+  const right = addToDesktop('right', html);
+  return [left, right];
+}
+
+// Show flash card (used for time rewinds)
+function showFlashCard(text, sub, durationMs = 1500) {
+  $('flash-text').textContent = text;
+  $('flash-sub').textContent = sub;
+  $('flash-card').classList.add('visible');
+  scheduleAt(durationMs, () => {
+    $('flash-card').classList.remove('visible');
+  });
+}
+
+// Show transition overlay (between major segments)
+function showTransition(text, durationMs = 3000) {
+  $('transition-text').innerHTML = text;
+  $('transition-overlay').classList.add('visible');
+  scheduleAt(durationMs, () => {
+    $('transition-overlay').classList.remove('visible');
+  });
+}
+
+// =============================================================
+// SCENE 1 — Adam at home, 3:30 PM Thursday
+// =============================================================
+function runScene1() {
+  setSceneIndicator('Scene 1 — Adam');
+  setBothDevices("Adam's MacBook");
+  setBothApps('Calendar');
+  setLeftBattery(87);
+  setRightBattery(87);
+  setBothClocks('3:30 PM Thu');
+  setBothDesktops('adam');
+  unpauseAll();
+  clearBoth();
+
+  // Banner appears immediately
+  scheduleAt(200, () => {
+    showBanner('left', true);
+    showBanner('right', true);
+  });
+
+  // ===== BEAT 1 (0-7 sec): BIG Calendar showing Adam's identity + full schedule =====
+  const calendarBigHtml = `
+    <div class="window" id="cal-big" style="top: 50px; left: 5%; right: 5%; bottom: 30px; background:#fff; opacity: 0; transform: translateY(15px) scale(0.97);">
+      <div class="window-titlebar">
+        <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        <div class="window-title">Calendar — Thursday, May 7, 2026</div>
+      </div>
+      <div class="window-content" style="padding: 18px 28px; background: #fff; overflow: hidden; font-family: -apple-system, system-ui;">
+        <div style="text-align:center; margin-bottom: 12px;">
+          <div style="font-size: 32px; font-weight: 800; color: #d63384; letter-spacing: 0.5px; margin-bottom: 4px;">🎂 Adam Hossam · 12 Today</div>
+          <div style="font-size: 14px; font-weight: 700; color: #1a1a1a; letter-spacing: 0.3px;">Cambridge International Academy Bahrain</div>
+          <div style="font-size: 11px; color: #666; margin-top: 2px;">Year 7 · Top of Class · Term 2 — All A+</div>
+        </div>
+        <div style="border-top: 2px solid #1a1a1a; padding-top: 10px; margin-top: 8px;">
+          <div style="font-size: 11px; color: #1a1a1a; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.3px;">ADAM'S SCHEDULE — THIS WEEK</div>
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 10px; line-height: 1.4;">
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#4a90e2; font-weight:700; min-width:90px;">Today 3:30 PM</span>
+              <span style="color:#333;">Global Hack London — Team Avengers Sync (Teams) <span style="color:#4cd964;">● happening now</span></span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#af52de; font-weight:700; min-width:90px;">Today 5:30 PM</span>
+              <span style="color:#333;">Football final preparation, Bahrain club</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#af52de; font-weight:700; min-width:90px;">Today 7:00 PM</span>
+              <span style="color:#333;">Piano session</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0; background:#fff8e1; border-radius:3px;">
+              <span style="color:#ff9500; font-weight:700; min-width:90px;">Today 9:00 PM</span>
+              <span style="color:#333;">Pick up Pearla after gymnastics</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#4a90e2; font-weight:700; min-width:90px;">Tomorrow 9 AM</span>
+              <span style="color:#333;">Math Olympiad practice</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#4a90e2; font-weight:700; min-width:90px;">Tomorrow 11 AM</span>
+              <span style="color:#333;">AI Agentic session (online)</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#4a90e2; font-weight:700; min-width:90px;">Tomorrow 2 PM</span>
+              <span style="color:#333;">Stanford Data Analysis — module 4</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#ff9500; font-weight:700; min-width:90px;">Tomorrow 4 PM</span>
+              <span style="color:#333;">Pick up Pearla from music lesson</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0;">
+              <span style="color:#ff3b30; font-weight:700; min-width:90px;">Saturday 10 AM</span>
+              <span style="color:#333;">Orthodontist appointment</span>
+            </div>
+            <div style="display:flex; gap:10px; padding: 3px 0; background:#e3f2fd; border-radius:3px;">
+              <span style="color:#0a7080; font-weight:700; min-width:90px;">Tuesday</span>
+              <span style="color:#0a4d80; font-weight:600;">▶ Fly to LONDON · Global Hack Final · with Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  scheduleAt(800, () => {
+    addToBoth(calendarBigHtml);
+    // Force visibility
+    scheduleAt(100, () => {
+      ['left', 'right'].forEach(side => {
+        const c = $('desktop-' + side).querySelector('#cal-big');
+        if (c) {
+          c.style.opacity = '1';
+          c.style.transform = 'none';
+          c.classList.add('visible');
+        }
+      });
+    });
+  });
+
+  // ===== BEAT 2 (7-22 sec): Calendar shrinks, Teams meeting comes in =====
+  scheduleAt(7000, () => {
+    ['left', 'right'].forEach(side => {
+      const cal = $('desktop-' + side).querySelector('#cal-big');
+      if (cal) {
+        cal.style.transition = 'all 0.8s ease';
+        cal.style.top = 'auto';
+        cal.style.bottom = '14px';
+        cal.style.left = 'auto';
+        cal.style.right = '14px';
+        cal.style.width = '230px';
+        cal.style.height = '210px';
+        cal.querySelector('.window-content').innerHTML = `
+          <div style="padding:10px 12px;">
+            <div style="font-size:12px; font-weight:800; color:#d63384; margin-bottom:3px;">🎂 Adam · 12 today</div>
+            <div style="font-size:8px; color:#666; margin-bottom:6px; font-weight:600;">Cambridge International · Year 7 · All A+</div>
+            <div style="font-size:8px; color:#333; line-height:1.55;">
+              <div>● 3:30 Team Avengers sync</div>
+              <div>● 5:30 Football prep</div>
+              <div>● 7:00 Piano</div>
+              <div style="color:#ff9500; font-weight:700;">● 9:00 PM Pearla pickup w/ Mom</div>
+              <div style="margin-top:3px; color:#888;">Tomorrow: Math Olympiad · AI · Stanford</div>
+              <div style="color:#0a7080; font-weight:700; margin-top:4px;">▶ Tuesday: Fly LONDON</div>
+            </div>
+          </div>
+        `;
+      }
+    });
+    setBothApps('Teams');
+  });
+
+  // Teams call window opens at 7.5 sec
+  const teamsHtml = `
+    <div class="window teams-window" style="top: 50px; left: 16px; width: 64%; height: 80%;">
+      <div class="window-titlebar">
+        <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        <div class="window-title">Teams — Team Avengers · Pre-Final Sync</div>
+      </div>
+      <div class="window-content">
+        <div class="teams-content">
+          <div class="teams-header">
+            <div>
+              <div class="teams-meeting-name">Team Avengers · Pre-Final Sync</div>
+              <div class="teams-participants-count">6 participants · London Final next week</div>
+            </div>
+            <div class="teams-timer">14:32</div>
+          </div>
+          <div class="teams-tiles">
+            <div class="teams-tile tile-michael">
+              <div class="teams-tile-avatar">M</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">Michael Chen</div>
+                <div class="teams-tile-title">Lead · Stanford</div>
+              </div>
+            </div>
+            <div class="teams-tile tile-ann">
+              <div class="teams-tile-avatar">A</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">Ann Williams</div>
+                <div class="teams-tile-title">Stanford AI</div>
+              </div>
+            </div>
+            <div class="teams-tile tile-hazem">
+              <div class="teams-tile-avatar">H</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">Hazem Al-Najjar</div>
+                <div class="teams-tile-title">KPMG</div>
+              </div>
+            </div>
+            <div class="teams-tile tile-sarah">
+              <div class="teams-tile-avatar">S</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">Sarah Müller</div>
+                <div class="teams-tile-title">Bosch</div>
+              </div>
+            </div>
+            <div class="teams-tile tile-david">
+              <div class="teams-tile-avatar">D</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">David Park</div>
+                <div class="teams-tile-title">IDEO</div>
+              </div>
+            </div>
+            <div class="teams-tile tile-adam">
+              <div class="teams-tile-avatar">A</div>
+              <div class="teams-tile-info">
+                <div class="teams-tile-name">Adam Hossam</div>
+                <div class="teams-tile-title">Junior Engineer · 12</div>
+              </div>
+            </div>
+          </div>
+          <div class="teams-chat" id="teams-chat-scene1">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  scheduleAt(7500, () => {
+    addToBoth(teamsHtml);
+  });
+
+  const chatMessages = [
+    { delay: 8000, author: 'Michael Chen', authorClass: 'lead', text: '🎉 Team — we made it. Top 5 globally. London final this week. This is huge for all of us.' },
+    { delay: 12000, author: 'Michael Chen', authorClass: 'lead', text: 'Adam — final check. Token rotation ready? Travel sorted?' },
+    { delay: 16000, author: 'Adam Hossam', authorClass: 'adam', text: 'Token rotation will be ready tomorrow when I get the new MacBook Pro Dad ordered for me 💻' },
+    { delay: 20000, author: 'Adam Hossam', authorClass: 'adam', text: 'Tickets and hotel for me and Mom — Dad reserving tonight 🛫 Hilton Park Lane. We\'ll be there 👍' }
+  ];
+
+  chatMessages.forEach(m => {
+    scheduleAt(m.delay, () => {
+      ['left', 'right'].forEach(side => {
+        const c = $('desktop-' + side).querySelector('#teams-chat-scene1');
+        if (c) {
+          c.insertAdjacentHTML('beforeend', `
+            <div class="chat-msg">
+              <div class="chat-author ${m.authorClass}">${m.author}</div>
+              <div class="chat-text">${m.text}</div>
+            </div>
+          `);
+        }
+      });
+    });
+  });
+
+  // ===== BEAT 3 (22-26 sec): Teams fades, Pearla WhatsApp =====
+  scheduleAt(22000, () => {
+    ['left', 'right'].forEach(side => {
+      const teamsWindow = $('desktop-' + side).querySelector('.teams-window');
+      if (teamsWindow) {
+        teamsWindow.style.transition = 'opacity 0.5s ease';
+        teamsWindow.style.opacity = '0';
+        scheduleAt(600, () => teamsWindow.remove());
+      }
+    });
+  });
+
+  scheduleAt(22800, () => {
+    // Both Pearla AND Mom WhatsApp shown SIMULTANEOUSLY on each screen
+    const html = `
+      <div style="position: absolute; top: 50px; right: 14px; display: flex; flex-direction: column; gap: 12px; z-index: 60;">
+        <div class="whatsapp-notif" style="position: relative; top: auto; right: auto; width: 320px; opacity: 0; transform: translateY(-15px); transition: opacity 0.5s ease, transform 0.5s ease;">
+          <div class="notif-header">
+            <div class="notif-icon">💬</div>
+            <div>
+              <div class="notif-app-name">WhatsApp · From Pearla</div>
+            </div>
+          </div>
+          <div class="notif-from">Pearla 🌸</div>
+          <div class="notif-body">Adam don't forget to pick me up at 9 PM!</div>
+          <div class="notif-reply">Adam: I'll come with Mom — she stays in the car, I'll come in to pick you up 🤍</div>
+        </div>
+        <div class="whatsapp-notif" style="position: relative; top: auto; right: auto; width: 320px; opacity: 0; transform: translateY(-15px); transition: opacity 0.5s ease 0.6s, transform 0.5s ease 0.6s;">
+          <div class="notif-header">
+            <div class="notif-icon">💬</div>
+            <div>
+              <div class="notif-app-name">WhatsApp · From Mom</div>
+            </div>
+          </div>
+          <div class="notif-from">Mom ❤️</div>
+          <div class="notif-body">Adam, all A+ in Year 7 — proud of you 🎉. Your reward: 2 hours flight simulation 🛩️.</div>
+          <div class="notif-reply">Adam: Love you Mom ❤️ Waiting for you to drive to Pearla at 9 PM</div>
+        </div>
+      </div>
+    `;
+    ['left', 'right'].forEach(side => {
+      const d = $('desktop-' + side);
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html.trim();
+      const el = wrapper.firstElementChild;
+      d.appendChild(el);
+      // Trigger visibility on both notifs
+      scheduleAt(50, () => {
+        el.querySelectorAll('.whatsapp-notif').forEach(n => {
+          n.style.opacity = '1';
+          n.style.transform = 'translateY(0)';
+        });
+      });
+    });
+  });
+
+  // Scene ends at 30 sec → Scene 2 (cut 6 seconds of wait)
+  sceneTimer = scheduleAt(30000, () => {
+    runScene2();
+  });
+}
+
+// =============================================================
+// SCENE 2 — Hossam at office, 3:30 PM to 7:00 PM
+// =============================================================
+function runScene2() {
+  setSceneIndicator('Scene 2 — Hossam');
+  cancelAllTimeouts();
+  clearBoth();
+  setBothDevices("Hossam's MacBook · Beyond Company");
+  setBothApps('Calendar');
+  setLeftBattery(84);
+  setRightBattery(84);
+  setBothClocks('3:30 PM Thu');
+  setBothDesktops('hossam');
+  unpauseAll();
+
+  // ===== ADAM'S DREAM CORNER (visible throughout, bottom-left) =====
+  const adamCornerHtml = `
+    <div class="window" id="adam-corner" style="bottom: 14px; left: 14px; width: 240px; height: 220px; background:#fff; z-index: 5;">
+      <div class="window-titlebar">
+        <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        <div class="window-title">For Adam · Tonight</div>
+      </div>
+      <div class="window-content" style="padding: 10px 12px; background: #fff;">
+        <div style="font-size: 11px; font-weight: 700; color: #d63384; margin-bottom: 8px;">🎂 Adam · 12 today</div>
+        <div style="font-size: 10px; color: #333; line-height: 1.55;">
+          <div style="background:#e8f5e9; padding:5px 8px; border-radius:4px; margin-bottom:5px; border-left:2px solid #2a8d3a;">
+            <strong>💻 MacBook Pro 16″ M4 Max</strong><br>
+            <span style="color:#666; font-size:9px;">In cart · Delivery tomorrow AM</span>
+          </div>
+          <div style="background:#e3f2fd; padding:5px 8px; border-radius:4px; margin-bottom:5px; border-left:2px solid #0a7080;">
+            <strong>🛫 Bahrain → London Tue</strong><br>
+            <span style="color:#666; font-size:9px;">Business · 2 seats (Adam + Mom)</span>
+          </div>
+          <div style="background:#fff3e0; padding:5px 8px; border-radius:4px; border-left:2px solid #ff9500;">
+            <strong>🏨 Hilton London Park Lane</strong><br>
+            <span style="color:#666; font-size:9px;">3 nights · Hold expires 6 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  scheduleAt(200, () => {
+    addToBoth(adamCornerHtml);
+  });
+
+  // ===== BEAT 0 (0.5-7 sec): Big calendar showing Hossam's life =====
+  const calendarHossamHtml = `
+    <div class="window" id="hossam-cal" style="top: 50px; left: 8%; right: 8%; bottom: 250px; background:#fff;">
+      <div class="window-titlebar">
+        <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        <div class="window-title">Outlook Calendar — Hossam Aboutaleb · Beyond Company</div>
+      </div>
+      <div class="window-content" style="padding: 14px 24px; background: #fff; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #1a1a1a;">
+          <div>
+            <div style="font-size: 22px; font-weight: 800; color: #1a1a1a; letter-spacing: 0.3px;">Hossam Aboutaleb</div>
+            <div style="font-size: 11px; color: #666; margin-top: 3px;">Senior Account Manager · Beyond Company</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #888;">Thursday, May 7</div>
+            <div style="font-size: 14px; font-weight: 700; color: #d24726;">Q3 Close Week</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 10px;">
+          <div style="background: #fff5f5; padding: 8px 10px; border-radius: 6px; border-left: 3px solid #d24726;">
+            <div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Inbox</div>
+            <div style="font-size: 22px; font-weight: 800; color: #d24726;">10,567</div>
+            <div style="font-size: 9px; color: #888;">unread emails</div>
+          </div>
+          <div style="background: #fff8e1; padding: 8px 10px; border-radius: 6px; border-left: 3px solid #ff9500;">
+            <div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Tasks</div>
+            <div style="font-size: 22px; font-weight: 800; color: #ff9500;">3,677</div>
+            <div style="font-size: 9px; color: #888;">due by Sunday EOD</div>
+          </div>
+          <div style="background: #f0f4ff; padding: 8px 10px; border-radius: 6px; border-left: 3px solid #4a90e2;">
+            <div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">This Week</div>
+            <div style="font-size: 22px; font-weight: 800; color: #4a90e2;">147</div>
+            <div style="font-size: 9px; color: #888;">meetings booked</div>
+          </div>
+        </div>
+
+        <div style="font-size: 10px; color: #1a1a1a; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.3px;">TODAY · 24/7 BOOKED</div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; font-size: 7px; color: white;">
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">7 AM<br>Op call</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">8 AM<br>Daily</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">9 AM<br>Cust1</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">10 AM<br>Cust2</div>
+          <div style="background:#ff9500; padding:4px 3px; border-radius:2px;">11 AM<br>Internal</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">12 PM<br>Cust3</div>
+          <div style="background:#af52de; padding:4px 3px; border-radius:2px;">1 PM<br>Lunch+</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">2 PM<br>Cust4</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">3 PM<br>Sollozzo</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px; outline: 2px solid #ffd700;">4 PM<br>NOW</div>
+          <div style="background:#4a90e2; padding:4px 3px; border-radius:2px;">5 PM<br>Cust5</div>
+          <div style="background:#ff9500; padding:4px 3px; border-radius:2px;">6 PM<br>Internal</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">7 PM<br>Q3</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">8 PM<br>Q3</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">9 PM<br>Q3</div>
+          <div style="background:#d24726; padding:4px 3px; border-radius:2px;">10 PM<br>Q3</div>
+        </div>
+      </div>
+    </div>
+  `;
+  scheduleAt(500, () => {
+    addToBoth(calendarHossamHtml);
+  });
+
+  // ===== Calendar disappears at 7 sec =====
+  scheduleAt(10000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#hossam-cal');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothApps('Teams');
+    setBothClocks('3:35 PM Thu');
+  });
+
+  // ===== BEAT 1 (7.5-12 sec): Teams call with Sollozzo =====
+  scheduleAt(10500, () => {
+    const teamsHtml = `
+      <div class="window teams-window" id="teams-sollozzo" style="top: 50px; left: 8%; right: 8%; bottom: 250px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Teams — Customer Q3 Review · Sollozzo Industries</div>
+        </div>
+        <div class="window-content">
+          <div class="teams-content">
+            <div class="teams-header">
+              <div>
+                <div class="teams-meeting-name">Sollozzo Industries Q3 Review · Closing</div>
+                <div class="teams-participants-count">3 participants</div>
+              </div>
+              <div class="teams-timer">47:12</div>
+            </div>
+            <div class="teams-tiles" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="teams-tile tile-michael">
+                <div class="teams-tile-avatar">H</div>
+                <div class="teams-tile-info">
+                  <div class="teams-tile-name">Hossam Aboutaleb</div>
+                  <div class="teams-tile-title">Beyond Co.</div>
+                </div>
+              </div>
+              <div class="teams-tile tile-david">
+                <div class="teams-tile-avatar">V</div>
+                <div class="teams-tile-info">
+                  <div class="teams-tile-name">V. Sollozzo</div>
+                  <div class="teams-tile-title">Sollozzo Ind.</div>
+                </div>
+              </div>
+              <div class="teams-tile tile-hazem">
+                <div class="teams-tile-avatar">B</div>
+                <div class="teams-tile-info">
+                  <div class="teams-tile-name">B. Cresci</div>
+                  <div class="teams-tile-title">Sollozzo CFO</div>
+                </div>
+              </div>
+            </div>
+            <div class="teams-chat" id="teams-chat-sollozzo">
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToBoth(teamsHtml);
+  });
+
+  scheduleAt(12500, () => {
+    ['left', 'right'].forEach(side => {
+      const c = $('desktop-' + side).querySelector('#teams-chat-sollozzo');
+      if (c) c.insertAdjacentHTML('beforeend', `
+        <div class="chat-msg" style="margin-bottom: 8px;">
+          <div class="chat-author" style="font-size: 14px;">Virgil Sollozzo · Sollozzo Industries</div>
+          <div class="chat-text" style="font-size: 15px; padding: 11px 17px; line-height: 1.5; max-width: 85%;">Hossam, your support saved this deal. <strong style="color: #4cd964;">$5M order confirmation</strong> next week. Q4 starting strong with you. Thank you. 🤝</div>
+        </div>
+      `);
+    });
+  });
+
+  scheduleAt(14500, () => {
+    ['left', 'right'].forEach(side => {
+      const c = $('desktop-' + side).querySelector('#teams-chat-sollozzo');
+      if (c) c.insertAdjacentHTML('beforeend', `
+        <div class="chat-msg" style="margin-bottom: 8px;">
+          <div class="chat-author adam" style="font-size: 14px;">Hossam</div>
+          <div class="chat-text" style="font-size: 15px; padding: 11px 17px; line-height: 1.5; max-width: 85%;">Thank you Virgil. Looking forward to Q4. 🤝</div>
+        </div>
+      `);
+    });
+  });
+
+  // ===== Teams disappears at 12 sec =====
+  scheduleAt(16000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#teams-sollozzo');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothClocks('3:50 PM Thu');
+  });
+
+  // ===== BEAT 2 (12.5-17 sec): Copilot dark comedy =====
+  scheduleAt(16500, () => {
+    const copilotHtml = `
+      <div class="window copilot-window" id="copilot-w" style="top: 50px; left: 8%; right: 8%; bottom: 250px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Copilot — Smart Workflow Assistant</div>
+        </div>
+        <div class="window-content">
+          <div class="copilot-header">
+            <div class="copilot-header-title">⚡ Copilot Suggestions</div>
+            <div class="copilot-header-sub">I analyzed your inbox — Q3 close intensity</div>
+          </div>
+          <div class="copilot-body" style="padding: 22px 30px;">
+            <div style="font-size: 13px; margin-bottom: 12px;"><strong>Optimizations identified:</strong></div>
+            <div class="copilot-suggestion" style="font-size: 12px; padding: 5px 0;">✓ Batch responses to 8 customers — saves 3 hours</div>
+            <div class="copilot-suggestion" style="font-size: 12px; padding: 5px 0;">✓ AI-draft Q3 report — saves 2 hours</div>
+            <div class="copilot-suggestion" style="font-size: 12px; padding: 5px 0;">✓ Auto-schedule 12 follow-ups — saves 1 hour</div>
+            <div style="font-size: 13px; margin-top: 14px;"><strong>Total time saved: 6 hours</strong></div>
+            <div class="copilot-emphasis" style="font-size: 14px; padding: 10px 14px;">Tasks remaining after optimization: 23 (was 20)</div>
+            <div class="copilot-warn" style="font-size: 14px;">⚠ Human review required for all suggestions</div>
+            <div class="copilot-rate" style="font-size: 12px; margin-top: 12px;">
+              How would you rate this assistance?
+              <div class="copilot-stars" style="font-size: 18px;">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToBoth(copilotHtml);
+  });
+
+  // ===== Copilot disappears at 17 sec =====
+  scheduleAt(22000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#copilot-w');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothClocks('4:00 PM Thu');
+  });
+
+  // ===== BEAT 3 (17.5-22 sec): Starbucks 25 espressos =====
+  scheduleAt(22500, () => {
+    const sbHtml = `
+      <div class="window starbucks-window" id="starbucks-w" style="top: 50px; left: 8%; right: 8%; bottom: 250px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Starbucks Delivery — Confirm Order</div>
+        </div>
+        <div class="window-content">
+          <div class="starbucks-header" style="padding: 16px 22px;">
+            <div class="starbucks-title" style="font-size: 18px;">☕ Starbucks Order</div>
+          </div>
+          <div class="starbucks-body" style="padding: 22px 30px;">
+            <div class="starbucks-order" style="padding: 14px 18px;">
+              <div class="starbucks-item" style="font-size: 15px;">Espresso Shots — Large</div>
+              <div class="starbucks-qty" style="font-size: 44px; margin-top: 6px;">25</div>
+            </div>
+            <div class="starbucks-chat" style="margin-top: 14px;">
+              <div class="starbucks-msg" style="font-size: 12px;">Same order as last Thursday Mr. Hossam? Confirm?</div>
+              <div class="starbucks-msg me" style="font-size: 12px; text-align: right;">Yes confirm</div>
+            </div>
+            <div class="starbucks-receipt" style="font-size: 12px; padding: 10px 14px; margin-top: 12px;">
+              <strong>25 Espresso Shots</strong><br>
+              BHD 47.500 · Delivery 4:00 PM ✓
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToBoth(sbHtml);
+  });
+
+  // ===== Starbucks disappears at 22 sec =====
+  scheduleAt(28000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#starbucks-w');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothClocks('4:30 PM Thu');
+  });
+
+  // ===== BEAT 4 (22.5-27 sec): Wife WhatsApp =====
+  scheduleAt(28500, () => {
+    const waHtml = `
+      <div class="window whatsapp-window" id="wife-w" style="top: 50px; left: 8%; right: 8%; bottom: 250px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Ann ❤️</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar ann">A</div>
+            <div>
+              <div class="wa-contact-name">Ann ❤️</div>
+              <div class="wa-contact-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages" style="padding: 14px 16px; gap: 8px;">
+            <div class="wa-msg sent" style="animation-delay: 0.3s; font-size: 15px; padding: 11px 17px; max-width: 80%;">Ann, sorry working late tonight. Cinema another day. Q3 closing 🙏<div class="time">4:30 PM</div></div>
+            <div class="wa-msg received" style="animation-delay: 1.5s; font-size: 15px; padding: 11px 17px; max-width: 80%;">Again? Three weekends in a row Hossam<div class="time">4:31 PM</div></div>
+            <div class="wa-msg sent" style="animation-delay: 2.8s; font-size: 15px; padding: 11px 17px; max-width: 80%;">Last push, promise. Adam's MacBook tomorrow. Pearla's recital next Friday. We'll celebrate together.<div class="time">4:32 PM</div></div>
+            <div class="wa-msg received" style="animation-delay: 4.0s; font-size: 15px; padding: 11px 17px; max-width: 80%;">Okay love. Don't forget to eat ❤️<div class="time">4:33 PM</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToBoth(waHtml);
+  });
+
+  // ===== Wife disappears at 27 sec =====
+  scheduleAt(34000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#wife-w');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothClocks('5:30 PM Thu');
+    // Lighting darkens
+    setBothDesktops('hossam dim');
+  });
+
+  // ===== BEAT 5 (27.5-32 sec): Manager Don Corleone =====
+  scheduleAt(34500, () => {
+    const donHtml = `
+      <div class="window teams-window" id="don-w" style="top: 50px; left: 8%; right: 8%; bottom: 250px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Teams — Don Corleone · Manager</div>
+        </div>
+        <div class="window-content">
+          <div class="teams-content">
+            <div class="teams-header">
+              <div>
+                <div class="teams-meeting-name">Don Corleone — Manager</div>
+                <div class="teams-participants-count">Direct message</div>
+              </div>
+            </div>
+            <div class="teams-chat" style="padding: 14px 18px; gap: 10px;">
+              <div class="chat-msg" style="animation-delay: 0.4s; margin-bottom: 4px;">
+                <div class="chat-author lead" style="font-size: 14px; margin-bottom: 5px;">Don Corleone · Manager</div>
+                <div class="chat-text" style="font-size: 15px; padding: 11px 17px; line-height: 1.5; max-width: 88%;">Hossam — congratulations on closing the <strong style="color: #4cd964;">$5M Sollozzo deal</strong>! Excellent quarter for you. One thing — need update on collection numbers from operations. Where do we stand on Q3 receivables?</div>
+              </div>
+              <div class="chat-msg" style="animation-delay: 2.5s">
+                <div class="chat-author adam" style="font-size: 14px; margin-bottom: 5px;">Hossam</div>
+                <div class="chat-text" style="font-size: 15px; padding: 11px 17px; line-height: 1.5; max-width: 88%;">Will check with operations and revert by EOD. ✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToBoth(donHtml);
+  });
+
+  // ===== Manager disappears at 32 sec, lighting darkens further =====
+  scheduleAt(41000, () => {
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#don-w');
+      if (w) {
+        w.style.transition = 'opacity 0.5s ease';
+        w.style.opacity = '0';
+        scheduleAt(600, () => w.remove());
+      }
+    });
+    setBothClocks('7:00 PM Thu');
+    // Even darker
+    setBothDesktops('hossam dim');
+    setLeftBattery(72);
+    setRightBattery(72);
+  });
+
+  // ===== BEAT 6 (32.5-36 sec): Termination email + Adam corner VANISHES =====
+  scheduleAt(42000, () => {
+    // Adam dream widget vanishes — the dream evaporates
+    ['left', 'right'].forEach(side => {
+      const w = $('desktop-' + side).querySelector('#adam-corner');
+      if (w) {
+        w.style.transition = 'all 0.8s ease';
+        w.style.opacity = '0';
+        w.style.transform = 'scale(0.8) translateY(20px)';
+        scheduleAt(900, () => w.remove());
+      }
+    });
+  });
+
+  scheduleAt(42500, () => {
+    const notif = `
+      <div class="outlook-notif" style="top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%;">
+        <div class="outlook-from">Outlook · From HR — Beyond Company</div>
+        <div class="outlook-subject" style="font-size: 16px;">TERMINATION OF EMPLOYMENT — HOSSAM ABOUTALEB</div>
+        <div class="outlook-preview" style="font-size: 12px;">Effective immediately. Failure to meet Q3 KPI targets. Please return company equipment by 7:45 PM.</div>
+      </div>
+    `;
+    addToBoth(notif);
+  });
+
+  // End scene 2 → Scene 3
+  sceneTimer = scheduleAt(47000, () => {
+    runScene3();
+  });
+}
+
+// =============================================================
+// SCENE 3 — Termination + universe split, 7:30 PM
+// =============================================================
+function runScene3() {
+  setSceneIndicator('Scene 3 — Split');
+  cancelAllTimeouts();
+  clearBoth();
+  setBothClocks('7:30 PM Thu');
+  setLeftBattery(72);
+  setRightBattery(72);
+  setBothDesktops('hossam dim');
+  unpauseAll();
+
+  // ===== Beat 1 (0-4 sec): Termination email opens on BOTH =====
+  const emailHtml = `
+    <div class="window email-window visible" style="top: 36px; left: 16px; right: 16px; bottom: 16px; opacity: 1; transform: none;">
+      <div class="window-titlebar">
+        <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        <div class="window-title">Outlook — TERMINATION OF EMPLOYMENT</div>
+      </div>
+      <div class="window-content">
+        <div class="email-header">
+          <div class="email-from-line">
+            <span class="email-from">From: HR — Beyond Company</span>
+            <span class="email-time" style="margin-left:auto">7:30 PM Thu</span>
+          </div>
+          <div class="email-subject">TERMINATION OF EMPLOYMENT — HOSSAM</div>
+        </div>
+        <div class="email-body">
+          <p>Mr. Hossam,</p>
+          <p>Effective immediately, your employment with Beyond Company is terminated for failure to meet Q3 KPI targets.</p>
+          <ul>
+            <li>Collection rate: target 80% / Q3 actual <span class="red">67%</span> ❌</li>
+            <li>Customer retention: target 90% / Q3 actual 88%</li>
+            <li>Deal closure: target 100% / Q3 actual 105% ✓</li>
+          </ul>
+          <p>Termination clause activated per Section 4.3.</p>
+          <p>Please return company equipment by <strong>7:45 PM</strong>.</p>
+          <p style="margin-top:10px;"><strong>Karen Mitchell — HR Director</strong></p>
+        </div>
+      </div>
+    </div>
+  `;
+  addToBoth(emailHtml);
+
+  // Beat 2 (4 sec): Pause RIGHT
+  scheduleAt(4000, () => {
+    pauseRight();
+  });
+
+  // ============================================================
+  // LEFT SIDE — UNIVERSE A (NO TRUST 0)
+  // ============================================================
+
+  // Beat 3 (4.5-9 sec): Hossam tries Don
+  scheduleAt(4500, () => {
+    clearLeftDesktop();
+    const html = `
+      <div class="window whatsapp-window" style="top: 40px; left: 12px; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Don Corleone · Manager</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar don">D</div>
+            <div>
+              <div class="wa-contact-name">Don Corleone</div>
+              <div class="wa-contact-status" id="don-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages" id="don-msgs" style="padding: 14px 16px; gap: 8px;">
+            <div class="wa-msg sent" style="animation-delay: 0.3s; font-size: 13px; padding: 9px 14px;">Don, urgent. I just received a termination email. Need to discuss immediately.<div class="time">7:30 PM</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', html);
+  });
+
+  scheduleAt(6500, () => {
+    const m = $('desktop-left').querySelector('#don-msgs');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="wa-msg received" style="animation-delay:0s; font-size: 13px; padding: 9px 14px;">Hossam, I saw the report. Numbers don't lie. We had targets, you missed collection. I have to support the company decision.<div class="time">7:31 PM</div></div>`);
+  });
+
+  scheduleAt(8500, () => {
+    const m = $('desktop-left').querySelector('#don-msgs');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="wa-msg sent" style="animation-delay:0s; font-size: 13px; padding: 9px 14px;">Don, the collection number is wrong. Operations controls that data.<div class="time">7:32 PM</div></div>`);
+  });
+
+  scheduleAt(10000, () => {
+    const m = $('desktop-left').querySelector('#don-msgs');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="wa-msg received" style="animation-delay:0s; font-size: 13px; padding: 9px 14px;">Take it up with HR. Out of office until Monday.<div class="time">7:32 PM</div></div>`);
+    const status = $('desktop-left').querySelector('#don-status');
+    if (status) status.textContent = 'last seen 7:33 PM';
+  });
+
+  // Beat 4 (12-16 sec): HR rejection
+  scheduleAt(12000, () => {
+    clearLeftDesktop();
+    const html = `
+      <div class="window email-window" style="top: 40px; left: 12px; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Outlook — Reply to HR</div>
+        </div>
+        <div class="window-content">
+          <div class="email-header">
+            <div class="email-from-line">
+              <span class="email-from">To: Karen Mitchell</span>
+              <span class="email-time" style="margin-left:auto">7:33 PM</span>
+            </div>
+            <div class="email-subject warn">URGENT — Appeal of termination</div>
+          </div>
+          <div class="email-body">
+            <p>Karen, the collection rate of 67% is calculated from operations data. I closed 105% of deals and retained 88% of customers. The collection metric is operations-controlled. Please reconsider before 7:45 PM.</p>
+            <p style="margin-top:10px; color:#888;"><em>Sent ✓</em></p>
+            <div id="hr-response" style="margin-top: 14px; padding: 12px; background: #ffe8e8; border-left: 3px solid #d24726; opacity: 0; transition: opacity 0.6s ease;">
+              <strong style="color:#c00; font-size:12px;">Auto-reply from Karen Mitchell — 7:34 PM</strong>
+              <p style="margin-top:6px; font-size:12px;">Mr. Hossam, the KPI you signed is binding. The numbers are the numbers. We don't make exceptions. Termination stands.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', html);
+    scheduleAt(2000, () => {
+      const r = $('desktop-left').querySelector('#hr-response');
+      if (r) r.style.opacity = '1';
+    });
+  });
+
+  // Beat 5 (17 sec): Time rewinds — OLD KPI meeting
+  scheduleAt(17000, () => {
+    showFlashCard('6 Months Ago', 'January 2026 · Old KPI System', 1500);
+  });
+
+  scheduleAt(18500, () => {
+    clearLeftDesktop();
+    setLeftDesktop('hossam memory');
+    const html = `
+      <div class="window teams-window" style="top: 40px; left: 12px; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Teams — Q1 KPI Review · Don Corleone</div>
+        </div>
+        <div class="window-content">
+          <div class="teams-content">
+            <div class="teams-header">
+              <div>
+                <div class="teams-meeting-name">Q1 KPI Review · Old system</div>
+                <div class="teams-participants-count">Top-down · pressure-based</div>
+              </div>
+              <div class="teams-timer">12:08</div>
+            </div>
+            <div class="teams-chat" id="kpi-chat" style="padding: 14px 18px; gap: 10px;">
+              <div class="chat-msg" style="animation-delay:0.3s">
+                <div class="chat-author adam" style="font-size: 12px;">Hossam</div>
+                <div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">Don, the collection target of 80% — that's not realistic. I don't control operations. If they delay processing, I miss the target.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', html);
+  });
+
+  scheduleAt(20500, () => {
+    const m = $('desktop-left').querySelector('#kpi-chat');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="chat-msg" style="animation-delay:0s"><div class="chat-author lead" style="font-size: 12px;">Don Corleone</div><div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">Hossam, this is what the board approved. Sign the KPI, and we'll support you. Don't sign, and we'll need to reassess your role.</div></div>`);
+  });
+
+  scheduleAt(22500, () => {
+    const m = $('desktop-left').querySelector('#kpi-chat');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="chat-msg" style="animation-delay:0s"><div class="chat-author adam" style="font-size: 12px;">Hossam</div><div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5; font-style: italic; color: #888;">...Okay. I'll sign.</div></div>`);
+  });
+
+  // Beat 6 (24 sec): Back to present, smoking gun
+  scheduleAt(24500, () => {
+    showFlashCard('Present', '7:35 PM', 1200);
+  });
+
+  scheduleAt(25700, () => {
+    clearLeftDesktop();
+    setLeftDesktop('hossam dim');
+    const html = `
+      <div class="window" style="top: 40px; left: 12px; right: 12px; bottom: 12px; background:#fff;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">KPI Agreement — Signed Jan 2026</div>
+        </div>
+        <div class="window-content">
+          <div class="kpi-doc" style="padding: 18px 24px;">
+            <div class="kpi-doc-title" style="font-size: 16px;">Beyond Company — KPI Agreement</div>
+            <div class="kpi-section">
+              <div class="kpi-section-title" style="font-size: 13px;">Section 4.3 — Collection Rate Target</div>
+              <div class="kpi-clause" style="font-size: 12px; line-height: 1.7;">
+                "Collection rate: 80% per quarter, calculated based on customer payment records <span style="background: #fff8dc; padding: 2px 6px; border-bottom: 3px solid #ffd700; font-weight: 700;">as reported by Operations Department</span>. Failure to meet this target gives the company the right to terminate employment."
+              </div>
+            </div>
+            <div class="kpi-signature" style="margin-top: 16px;">
+              Signed: 12 January 2026
+              <div class="kpi-signature-line">— Hossam</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', html);
+  });
+
+  // ============================================================
+  // SWITCH UNIVERSES — Pause LEFT, Resume RIGHT
+  // ============================================================
+  scheduleAt(28500, () => {
+    pauseLeft();
+    setLeftClock('7:35 PM Thu');
+    resumeRight();
+    setRightClock('7:30 PM Thu');
+    // Don't clear right — termination email stays visible
+  });
+
+  // ============================================================
+  // RIGHT SIDE — UNIVERSE B (TRUST 0 HERO UNIVERSE)
+  // ============================================================
+
+  // Beat 7 (29.5 sec): Hossam stares at termination then opens Trust 0
+  scheduleAt(29500, () => {
+    // Shrink termination email to side, make room for Trust 0
+    const emailWindow = $('desktop-right').querySelector('.email-window');
+    if (emailWindow) {
+      emailWindow.style.transition = 'all 0.6s ease';
+      emailWindow.style.top = '36px';
+      emailWindow.style.left = '12px';
+      emailWindow.style.right = '52%';
+      emailWindow.style.bottom = '12px';
+    }
+  });
+
+  // Beat 8 (30.5 sec): Trust 0 opens on right side of right screen
+  scheduleAt(30500, () => {
+    const html = `
+      <div class="window trust0-window" id="trust0-platform" style="top: 36px; left: 50%; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Trust 0 — KPI Chain</div>
+        </div>
+        <div class="window-content">
+          <div class="trust0-header">
+            <div>
+              <div class="trust0-logo">TRUST 0</div>
+              <div class="trust0-tagline">Active KPI integrity</div>
+            </div>
+            <div class="trust0-user">
+              <span>Hossam</span>
+              <div class="trust0-user-avatar">H</div>
+            </div>
+          </div>
+          <div class="trust0-body">
+            <div class="trust0-sidebar">
+              <div class="trust0-nav-section">Workspace</div>
+              <div class="trust0-nav-item active">KPI Chain</div>
+              <div class="trust0-nav-item">Evidence</div>
+              <div class="trust0-nav-item">Patterns</div>
+              <div class="trust0-nav-item">Records</div>
+            </div>
+            <div class="trust0-main">
+              <div class="trust0-main-title" style="font-size: 13px;">Q3 Collection Chain</div>
+              <div class="trust0-main-meta">7:32 PM · Generate evidence chain</div>
+              <button class="trust0-button" id="generate-btn" style="font-size: 11px; padding: 10px 14px;">◆ Generate Q3 Collection Chain Report</button>
+              <div id="trust0-result-container" style="opacity:0; transition: opacity 0.5s ease;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('right', html);
+  });
+
+  // Beat 9 (32 sec): Click generate
+  scheduleAt(32000, () => {
+    const btn = $('desktop-right').querySelector('#generate-btn');
+    if (btn) {
+      btn.style.transform = 'scale(0.97)';
+      setTimeout(() => btn.style.transform = '', 200);
+    }
+  });
+
+  // Beat 10 (32.4 sec): Platform thinking
+  scheduleAt(32400, () => {
+    const c = $('desktop-right').querySelector('#trust0-result-container');
+    if (c) {
+      c.innerHTML = `<div class="trust0-thinking" style="font-size: 11px; padding: 9px 13px;">Reading chain · 6 months · 47 entries · all signed...</div>`;
+      c.style.opacity = '1';
+    }
+  });
+
+  // ============================================================
+  // FLASHBACK — Trust 0 introduction meeting
+  // ============================================================
+
+  // Beat 11 (34 sec): Time rewinds — NEW Trust 0 KPI meeting
+  scheduleAt(34000, () => {
+    showFlashCard('6 Months Ago', 'January 2026 · Trust 0 Introduction', 1500);
+  });
+
+  scheduleAt(35500, () => {
+    // Hide the present-day view temporarily
+    const emailW = $('desktop-right').querySelector('.email-window');
+    const trust0W = $('desktop-right').querySelector('#trust0-platform');
+    if (emailW) emailW.style.opacity = '0.15';
+    if (trust0W) trust0W.style.opacity = '0.15';
+    setRightDesktop('hossam memory');
+
+    const html = `
+      <div class="window teams-window" id="flashback-teams" style="top: 50px; left: 8%; right: 8%; bottom: 50px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Teams — Q1 KPI Review · Don Corleone · Trust 0 Onboarding</div>
+        </div>
+        <div class="window-content">
+          <div class="teams-content">
+            <div class="teams-header">
+              <div>
+                <div class="teams-meeting-name">Q1 KPI Review · NEW Trust 0 Platform</div>
+                <div class="teams-participants-count">Authority-based · chain-verified</div>
+              </div>
+              <div class="teams-timer">14:22</div>
+            </div>
+            <div class="teams-chat" id="trust0-kpi-chat" style="padding: 14px 18px; gap: 10px;">
+              <div class="chat-msg" style="animation-delay:0.3s">
+                <div class="chat-author lead" style="font-size: 12px;">Don Corleone</div>
+                <div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">Hossam, this year we're using <strong style="color: #4dd4ff;">Trust 0</strong> — our new KPI platform. It maps the real chain. Each target is linked to who actually controls it. No more carrying numbers you can't influence.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('right', html);
+  });
+
+  scheduleAt(37500, () => {
+    const m = $('desktop-right').querySelector('#trust0-kpi-chat');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="chat-msg" style="animation-delay:0s"><div class="chat-author adam" style="font-size: 12px;">Hossam</div><div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">So if operations delays collection, the impact splits between me and them based on real authority?</div></div>`);
+  });
+
+  scheduleAt(39500, () => {
+    const m = $('desktop-right').querySelector('#trust0-kpi-chat');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="chat-msg" style="animation-delay:0s"><div class="chat-author lead" style="font-size: 12px;">Don Corleone</div><div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">Exactly. The chain is signed by everyone every quarter. Real KPIs, real authority. Welcome to Trust 0.</div></div>`);
+  });
+
+  scheduleAt(41500, () => {
+    const m = $('desktop-right').querySelector('#trust0-kpi-chat');
+    if (m) m.insertAdjacentHTML('beforeend', `<div class="chat-msg" style="animation-delay:0s"><div class="chat-author adam" style="font-size: 12px;">Hossam</div><div class="chat-text" style="font-size: 13px; padding: 10px 14px; line-height: 1.5;">Signed. With confidence this time. ✓</div></div>`);
+  });
+
+  // Beat 12 (43.5 sec): Back to present — flashback fades, present returns
+  scheduleAt(43500, () => {
+    showFlashCard('Present', '7:33 PM', 1200);
+  });
+
+  scheduleAt(45000, () => {
+    // Remove flashback Teams, restore email + Trust 0
+    const flashback = $('desktop-right').querySelector('#flashback-teams');
+    if (flashback) {
+      flashback.style.transition = 'opacity 0.5s ease';
+      flashback.style.opacity = '0';
+      scheduleAt(600, () => flashback.remove());
+    }
+    setRightDesktop('hossam');
+    const emailW = $('desktop-right').querySelector('.email-window');
+    const trust0W = $('desktop-right').querySelector('#trust0-platform');
+    if (emailW) {
+      emailW.style.transition = 'opacity 0.5s ease';
+      emailW.style.opacity = '1';
+    }
+    if (trust0W) {
+      trust0W.style.transition = 'opacity 0.5s ease';
+      trust0W.style.opacity = '1';
+    }
+  });
+
+  // Beat 13 (46 sec): Trust 0 results render in the platform
+  scheduleAt(46000, () => {
+    const c = $('desktop-right').querySelector('#trust0-result-container');
+    if (!c) return;
+    c.innerHTML = `
+      <div class="trust0-result" style="padding: 12px 14px;">
+        <div class="trust0-result-title" style="font-size: 11px;">◆ Q3 Collection Chain — Authority Map</div>
+        <div class="trust0-chain-step" style="font-size: 10px;"><span class="step-num">1</span> Customer pays → Operations (<span class="controlled">Michael</span>)</div>
+        <div class="trust0-chain-step" style="font-size: 10px;"><span class="step-num">2</span> Operations records (<span class="controlled">Michael</span>)</div>
+        <div class="trust0-chain-step" style="font-size: 10px;"><span class="step-num">3</span> Reports to HR (<span class="controlled">Michael</span>)</div>
+        <div class="trust0-chain-step" style="font-size: 10px;"><span class="step-num">4</span> Sales credited → Hossam evaluated</div>
+
+        <div class="trust0-key-finding" style="padding: 10px 12px; margin: 10px 0;">
+          <div class="label" style="font-size: 10px;">⚠ Key Finding</div>
+          <div class="trust0-key-line" style="font-size: 14px;"><span class="check">Verified: 84% ✓</span></div>
+          <div class="trust0-key-line" style="font-size: 14px;"><span class="x">Reported: 67% ✗</span></div>
+          <div class="trust0-key-line" style="font-size: 12px; color: #ffb400;">Discrepancy: 17 pts</div>
+        </div>
+
+        <div class="trust0-pattern-flag" style="font-size: 10px; padding: 7px 11px;">⚠ Pattern: 4 quarters discrepancies — Hossam's accounts only.</div>
+
+        <button class="trust0-button send" id="send-evidence-btn" style="font-size: 10px; padding: 7px 12px; margin-top: 10px;"><span>↗</span> Reply to HR with Chain Evidence</button>
+      </div>
+    `;
+  });
+
+  // Beat 14 (51 sec): Send evidence
+  scheduleAt(51000, () => {
+    const btn = $('desktop-right').querySelector('#send-evidence-btn');
+    if (btn) {
+      btn.style.transform = 'scale(0.96)';
+      setTimeout(() => {
+        btn.innerHTML = '<span>✓</span> Sent · 7:33 PM · 4 recipients';
+        btn.style.background = '#1a7f4a';
+        btn.style.transform = '';
+      }, 200);
+    }
+  });
+
+  // Beat 15 (53 sec): Apology email arrives on right
+  scheduleAt(53000, () => {
+    const apology = `
+      <div class="outlook-notif bonus" style="top: 60px; right: 12px; left: auto; width: 280px;">
+        <div class="outlook-from">Outlook · Karen Mitchell — HR</div>
+        <div class="outlook-subject good">RE: Termination — Apology and Reinstatement</div>
+        <div class="outlook-preview">Mr. Hossam, we apologize. Trust 0 chain evidence reviewed. Termination rescinded immediately.</div>
+      </div>
+    `;
+    addToDesktop('right', apology);
+  });
+
+  // Beat 16 (55 sec): Operations Manager investigation pops up
+  scheduleAt(55000, () => {
+    const legal = `
+      <div class="outlook-notif legal" style="top: 200px; right: 12px; left: auto; width: 280px;">
+        <div class="outlook-from">Outlook · Beyond Company Legal</div>
+        <div class="outlook-subject legal">[Internal] Investigation — Michael</div>
+        <div class="outlook-preview">Operations reporting investigation opened. Michael placed on administrative leave.</div>
+      </div>
+    `;
+    addToDesktop('right', legal);
+  });
+
+  // ============================================================
+  // BOTH SCREENS ACTIVE — Bridge to demo
+  // ============================================================
+  scheduleAt(57500, () => {
+    resumeLeft();
+  });
+
+  // Beat 17 (58 sec): Small WhatsApp on each side simultaneously (ONLY appearance)
+  scheduleAt(58000, () => {
+    // LEFT — Sorry Adam
+    clearLeftDesktop();
+    const leftWA = `
+      <div class="window whatsapp-window" style="top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; height: 200px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Adam ❤️</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar adam">A</div>
+            <div>
+              <div class="wa-contact-name">Adam Hossam ❤️</div>
+              <div class="wa-contact-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages" style="padding: 12px;">
+            <div class="wa-msg sent" style="font-size: 12px; padding: 8px 12px;">Sorry Adam. The MacBook can't come this week. We need to talk when I'm home.<div class="time">7:42 PM ✓</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', leftWA);
+
+    // RIGHT — Tickets and hotel confirmation (clear right first to remove platform)
+    clearRightDesktop();
+    const rightWA = `
+      <div class="window whatsapp-window" style="top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; height: 240px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Adam ❤️</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar adam">A</div>
+            <div>
+              <div class="wa-contact-name">Adam Hossam ❤️</div>
+              <div class="wa-contact-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages" style="padding: 12px;">
+            <div class="wa-msg sent" style="font-size: 11px; padding: 7px 11px;">✓ MacBook Pro 16″ — Delivery tomorrow 9 AM<div class="time">7:42 PM</div></div>
+            <div class="wa-msg sent" style="font-size: 11px; padding: 7px 11px;">✓ BA Bahrain → London Tue · 2 seats<div class="time">7:43 PM</div></div>
+            <div class="wa-msg sent" style="font-size: 11px; padding: 7px 11px;">✓ Hilton Park Lane · 3 nights confirmed<div class="time">7:43 PM</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('right', rightWA);
+  });
+
+  // End scene 3 → bridge → demo
+  scheduleAt(63000, () => {
+    showTransition(`
+      Now let's see how Trust 0 saved<br>
+      <strong>Pearla's friend's father</strong><br>
+      to drop Pearla home.
+    `, 2500);
+  });
+
+  sceneTimer = scheduleAt(65500, () => {
+    runDemo();
+  });
+}
+
+// =============================================================
+// SCENE 4 — Two consequences + transition
+// =============================================================
+function runScene4() {
+  setSceneIndicator('Scene 4 — Endings');
+  cancelAllTimeouts();
+  clearBoth();
+  unpauseAll();
+  setLeftClock('7:38 PM Thu');
+  setRightClock('7:38 PM Thu');
+  setLeftBattery(70);
+  setRightBattery(70);
+  setBothDesktops('hossam');
+
+  // Beat 1 (0-3 sec): Different emails
+  scheduleAt(300, () => {
+    const leftNotif = `
+      <div class="outlook-notif">
+        <div class="outlook-from">Outlook · Beyond Company IT</div>
+        <div class="outlook-subject">ACCOUNT TERMINATION — 10 MIN TO LOG OFF</div>
+        <div class="outlook-preview">Mr. Hossam Aboutaleb, your access ends at 7:45 PM. Please save and return company equipment...</div>
+      </div>
+    `;
+    const rightNotif = `
+      <div class="outlook-notif bonus">
+        <div class="outlook-from">Outlook · Karen Mitchell — HR Director</div>
+        <div class="outlook-subject good">RE: Termination — Apology and Reinstatement</div>
+        <div class="outlook-preview">Mr. Hossam, please accept our formal apology. Trust 0 chain evidence reviewed. Termination rescinded immediately...</div>
+      </div>
+    `;
+    addToDesktop('left', leftNotif);
+    addToDesktop('right', rightNotif);
+  });
+
+  // Beat 2 (3-6 sec): Right — Michael's consequence
+  scheduleAt(3000, () => {
+    const legal = `
+      <div class="outlook-notif legal" style="top: 200px;">
+        <div class="outlook-from">Outlook · Beyond Company Legal</div>
+        <div class="outlook-subject legal">[Internal] Investigation — Operations Reporting</div>
+        <div class="outlook-preview">Investigation opened into Operations reporting practices. Michael Corleone placed on administrative leave pending review...</div>
+      </div>
+    `;
+    addToDesktop('right', legal);
+  });
+
+  // Beat 3 (5 sec): Left — apps closing
+  scheduleAt(5000, () => {
+    clearLeftDesktop();
+    setLeftDesktop('hossam dim');
+    const html = `
+      <div class="window" style="top: 50px; left: 12px; right: 12px; height: 220px; background:#fff;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">System — Account closing</div>
+        </div>
+        <div class="window-content" style="padding: 14px; background: #fff;">
+          <div style="color: #c00; font-weight: 700; font-size: 13px; margin-bottom: 12px;">⚠ Your access expires in 8 minutes</div>
+          <div style="font-size: 11px; color: #555; line-height: 1.7;">
+            <div id="signout-list">
+              <div>● Outlook signing out...</div>
+              <div>● Teams disconnecting...</div>
+              <div>● SharePoint logging out...</div>
+              <div>● OneDrive sync stopped...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', html);
+  });
+
+  // Beat 4 (5 sec): Right — checkout completes
+  scheduleAt(5000, () => {
+    const checkout = `
+      <div class="window" style="bottom: 14px; left: 12px; right: 12px; height: 220px; background:#fff;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">Order Confirmations</div>
+        </div>
+        <div class="window-content" style="padding: 14px; background: #fff;">
+          <div style="font-size:11px; color:#333; line-height:1.7;">
+            <div style="background:#e8f5e9; padding:8px 12px; border-radius:6px; margin-bottom: 6px; border-left:3px solid #2a8d3a;">
+              <strong>Apple Store</strong> — MacBook Pro 16″ M4 Max — $4,899 — <span class="green" style="color:#2a8d3a;">Delivery: Tomorrow before 12 PM ✓</span>
+            </div>
+            <div style="background:#e8f5e9; padding:8px 12px; border-radius:6px; margin-bottom: 6px; border-left:3px solid #2a8d3a;">
+              <strong>British Airways</strong> — Bahrain → London Tuesday Business — $3,200 ✓
+            </div>
+            <div style="background:#e8f5e9; padding:8px 12px; border-radius:6px; border-left:3px solid #2a8d3a;">
+              <strong>Hilton</strong> — London Park Lane · 3 nights — $1,800 ✓
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('right', checkout);
+  });
+
+  // Beat 5 (9 sec): WhatsApp to Adam — both screens, different messages
+  scheduleAt(9000, () => {
+    const leftWA = `
+      <div class="window whatsapp-window" style="top: 280px; left: 12px; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Adam ❤️</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar adam">A</div>
+            <div>
+              <div class="wa-contact-name">Adam ❤️</div>
+              <div class="wa-contact-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages">
+            <div class="wa-msg sent" style="animation-delay: 0.2s">Adam, I'm sorry son. The MacBook can't come this week. We need to talk when I get home. I love you.<div class="time">7:42 PM ✓</div></div>
+            <div class="wa-msg received" style="animation-delay: 2.5s">It's okay Dad. We'll figure it out. Love you.<div class="time">7:43 PM</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('left', leftWA);
+
+    const rightWA = `
+      <div class="window whatsapp-window" style="top: 280px; left: 12px; right: 12px; bottom: 12px;">
+        <div class="window-titlebar">
+          <div class="window-traffic"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+          <div class="window-title">WhatsApp — Adam ❤️</div>
+        </div>
+        <div class="window-content">
+          <div class="wa-header">
+            <div class="wa-avatar adam">A</div>
+            <div>
+              <div class="wa-contact-name">Adam ❤️</div>
+              <div class="wa-contact-status">online</div>
+            </div>
+          </div>
+          <div class="wa-messages">
+            <div class="wa-msg sent" style="animation-delay: 0.2s">Adam, MacBook arrives tomorrow morning. London tickets confirmed for Tuesday. Hotel booked. Make me proud son.<div class="time">7:42 PM ✓</div></div>
+            <div class="wa-msg received" style="animation-delay: 2.5s">YES!!! 🚀💻 Thank you Dad. The team will be so happy. I love you.<div class="time">7:43 PM</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    addToDesktop('right', rightWA);
+  });
+
+  // Beat 7 (15 sec): Closing visual - text overlay
+  scheduleAt(15000, () => {
+    showTransition(`
+      <strong>Two universes. Two endings.</strong><br>
+      Same employee. Same effort. Same family.<br>
+      <em style="color:#4dd4ff;">One difference.</em>
+    `, 4000);
+  });
+
+  // Beat 8 (19.5 sec): Transition to demo
+  scheduleAt(19500, () => {
+    showTransition(`
+      Now let's see how Trust 0 saved Pearla's friend's father<br>
+      to drop Pearla home.
+    `, 3500);
+  });
+
+  // End scene 4 → Demo
+  sceneTimer = scheduleAt(23500, () => {
+    runDemo();
+  });
+}
+
+// =============================================================
+// DEMO — Trust 0 platform walkthrough (50 sec)
+// =============================================================
+function runDemo() {
+  setSceneIndicator('Demo — Trust 0');
+  cancelAllTimeouts();
+
+  // Dismiss any lingering transition overlay
+  $('transition-overlay').classList.remove('visible');
+
+  $('stage').style.display = 'none';
+  $('demo-stage').classList.add('active');
+
+  const dc = $('demo-content');
+
+  // ============================================================
+  // BEAT 1 (0-7 sec): The original flat KPI sheet — what Hossam had
+  // ============================================================
+  $('demo-stage-label').textContent = 'Stage 1 of 7 · The Original KPI';
+  dc.innerHTML = `
+    <div class="demo-title visible">This is what Hossam signed in January.</div>
+    <div class="demo-subtitle visible">A flat document. One sentence. Hidden authority.</div>
+    <div style="flex:1; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: #fff; border-radius: 10px; padding: 36px 48px; max-width: 700px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); color: #1a1a1a;">
+        <div style="font-size: 16px; font-weight: 800; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #1a1a1a;">Beyond Company — KPI Agreement · Hossam · Jan 2026</div>
+        <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #555;">Section 4.3 — Collection Rate Target</div>
+        <div style="font-size: 14px; line-height: 1.7; color: #333;">
+          "Collection rate: 80% per quarter, calculated based on customer payment records <span style="background: #fff8dc; padding: 2px 6px; border-bottom: 3px solid #ffd700; font-weight: 700;">as reported by Operations Department</span>. Failure to meet this target gives the company the right to terminate employment."
+        </div>
+        <div style="font-size: 11px; color: #888; margin-top: 18px; padding-top: 12px; border-top: 1px solid #eee;">
+          <em>Signed: Hossam — 12 January 2026</em>
+        </div>
+      </div>
+    </div>
+    <div class="demo-caption visible">Hossam signed this. Then carried a number Operations controlled.</div>
+  `;
+
+  // ============================================================
+  // BEAT 2 (7-15 sec): Trust 0 ingests it, converts to chain
+  // ============================================================
+  scheduleAt(7000, () => {
+    $('demo-stage-label').textContent = 'Stage 2 of 7 · Ingestion + Chain';
+    dc.innerHTML = `
+      <div class="demo-title visible">Trust 0 ingests the KPI and builds the chain.</div>
+      <div class="demo-subtitle visible">Authority and accountability mapped at every level.</div>
+      <div class="chain-tree" style="margin-top: 20px;">
+        <div class="chain-level" id="lvl-ceo">
+          <div class="chain-node ceo">CEO<div class="chain-node-role">Q3 Strategic Commitment</div></div>
+        </div>
+        <div class="chain-arrow-down" id="arr-1"></div>
+        <div class="chain-level" id="lvl-exec">
+          <div class="chain-node exec don">Sales · Don Corleone</div>
+          <div class="chain-node exec michael">Operations · Michael Corleone</div>
+          <div class="chain-node exec">Finance</div>
+        </div>
+        <div class="chain-arrow-down" id="arr-2"></div>
+        <div class="chain-level" id="lvl-dept">
+          <div class="chain-node dept">Sales Team</div>
+          <div class="chain-node dept">Collection Processing</div>
+          <div class="chain-node dept">Receivables</div>
+        </div>
+        <div class="chain-arrow-down" id="arr-3"></div>
+        <div class="chain-level" id="lvl-individual">
+          <div class="chain-node individual hossam">Hossam · Sales Rep</div>
+          <div class="chain-node individual">Ops Lead</div>
+          <div class="chain-node individual">Analyst</div>
+        </div>
+      </div>
+      <div class="demo-caption visible" id="cap-2">Chain converted. Authority mapped. Every node signed.</div>
+    `;
+    scheduleAt(300, () => $('lvl-ceo').classList.add('visible'));
+    scheduleAt(800, () => $('arr-1').classList.add('visible'));
+    scheduleAt(1100, () => $('lvl-exec').classList.add('visible'));
+    scheduleAt(1700, () => $('arr-2').classList.add('visible'));
+    scheduleAt(2000, () => $('lvl-dept').classList.add('visible'));
+    scheduleAt(2600, () => $('arr-3').classList.add('visible'));
+    scheduleAt(2900, () => $('lvl-individual').classList.add('visible'));
+  });
+
+  // ============================================================
+  // BEAT 3 (15-22 sec): Approval cascade — each level signs
+  // ============================================================
+  scheduleAt(15000, () => {
+    $('demo-stage-label').textContent = 'Stage 3 of 7 · Approval Cascade';
+    dc.innerHTML = `
+      <div class="demo-title visible">Each level reviews and approves.</div>
+      <div class="demo-subtitle visible">Approved entries become immutable evidence.</div>
+      <div class="chain-tree" style="margin-top: 20px;">
+        <div class="chain-level visible">
+          <div class="chain-node ceo">CEO<div class="chain-node-role">Q3 Commitment</div><div class="approve-badge visible">✓</div></div>
+        </div>
+        <div class="chain-arrow-down visible"></div>
+        <div class="chain-level visible">
+          <div class="chain-node exec don">Don<div class="chain-node-role">Sales Lead</div><div class="approve-badge" id="approve-don">✓</div></div>
+          <div class="chain-node exec michael">Michael<div class="chain-node-role">Operations</div><div class="warn-badge" id="warn-michael">!</div></div>
+          <div class="chain-node exec">Finance Lead<div class="approve-badge" id="approve-fin">✓</div></div>
+        </div>
+        <div class="chain-arrow-down visible"></div>
+        <div class="chain-level visible">
+          <div class="chain-node individual hossam">Hossam<div class="chain-node-role">Sales Rep</div><div class="approve-badge" id="approve-hossam">✓</div></div>
+          <div class="chain-node individual">Ops Lead<div class="approve-badge" id="approve-ops">✓</div></div>
+          <div class="chain-node individual">Analyst<div class="approve-badge" id="approve-an">✓</div></div>
+        </div>
+      </div>
+      <div class="demo-caption visible">Don approves Sales. Hossam signs his branch. Michael's branch flagged for edit.</div>
+    `;
+    scheduleAt(800, () => $('approve-don').classList.add('visible'));
+    scheduleAt(1300, () => $('approve-fin').classList.add('visible'));
+    scheduleAt(1800, () => $('approve-hossam').classList.add('visible'));
+    scheduleAt(2300, () => $('approve-ops').classList.add('visible'));
+    scheduleAt(2800, () => $('approve-an').classList.add('visible'));
+    scheduleAt(3500, () => $('warn-michael').classList.add('visible'));
+  });
+
+  // ============================================================
+  // BEAT 4 (22-32 sec): Open Hossam's KPI dashboard
+  // ============================================================
+  scheduleAt(22000, () => {
+    $('demo-stage-label').textContent = 'Stage 4 of 7 · Hossam\'s KPI';
+    dc.innerHTML = `
+      <div class="demo-title visible">Open Hossam's KPI in Trust 0.</div>
+      <div class="demo-subtitle visible">Same KPI Hossam signed. Now powered by Trust 0.</div>
+      <div style="flex:1; padding: 20px 30px; background: #131a22; border-radius: 12px; margin-top: 14px; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #2a3540;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #fff;">Hossam · Sales Rep · Q3 KPI</div>
+            <div style="font-size: 10px; color: #6a7a8a;">Trust 0 chain · Signed 12 Jan 2026 · Live</div>
+          </div>
+          <div style="font-size: 11px; color: #4cd964; background: rgba(76,217,100,0.1); padding: 4px 10px; border-radius: 10px;">● ALL SIGNED</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div style="background: #0e1419; border-left: 3px solid #4cd964; padding: 12px 14px; border-radius: 6px;" id="kpi-closure">
+            <div style="font-size: 9px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px;">Deal Closure</div>
+            <div style="font-size: 22px; font-weight: 800; color: #4cd964; margin: 4px 0;">105%</div>
+            <div style="font-size: 9px; color: #4cd964;">Target 100% · Hossam authority 100%</div>
+          </div>
+          <div style="background: #0e1419; border-left: 3px solid #ffb400; padding: 12px 14px; border-radius: 6px;" id="kpi-retention">
+            <div style="font-size: 9px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px;">Retention</div>
+            <div style="font-size: 22px; font-weight: 800; color: #ffb400; margin: 4px 0;">88%</div>
+            <div style="font-size: 9px; color: #ffb400;">Target 90% · Hossam authority 80%</div>
+          </div>
+          <div style="background: #0e1419; border: 2px solid #4dd4ff; padding: 12px 14px; border-radius: 6px; box-shadow: 0 0 25px rgba(77,212,255,0.25);" id="kpi-collection">
+            <div style="font-size: 9px; color: #4dd4ff; text-transform: uppercase; letter-spacing: 0.5px;">Collection ◀ ZOOMING</div>
+            <div style="font-size: 22px; font-weight: 800; color: #4dd4ff; margin: 4px 0;">84%</div>
+            <div style="font-size: 9px; color: #4dd4ff;">Target 80% · Authority distributed</div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-caption visible">Each KPI shows its authority distribution — let's zoom into Collection.</div>
+    `;
+  });
+
+  // ============================================================
+  // BEAT 5 (32-42 sec): Zoom into Collection KPI — show full chain
+  // ============================================================
+  scheduleAt(32000, () => {
+    $('demo-stage-label').textContent = 'Stage 5 of 7 · Collection Chain';
+    dc.innerHTML = `
+      <div class="demo-title visible">Collection KPI — full responsibility chain.</div>
+      <div class="demo-subtitle visible">Every step. Every stakeholder. Every signature.</div>
+      <div style="flex:1; padding: 16px 24px; background: #131a22; border-radius: 12px; margin-top: 12px; overflow: hidden;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 700; color: #4dd4ff;">◆ Collection Rate · Q3 Chain</div>
+          <div style="font-size: 11px; color: #4cd964; font-weight: 600;">Target: 80% · Actual: 84%</div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: stretch;">
+          <div style="flex:1; background: #0e1419; padding: 11px 13px; border-radius: 6px; border: 1px solid #2a3540; position: relative;">
+            <div style="font-size: 9px; color: #6a7a8a; text-transform: uppercase;">Step 1</div>
+            <div style="font-size: 12px; color: #fff; font-weight: 600; margin: 4px 0;">Customer pays</div>
+            <div style="font-size: 9px; color: #4cd964;">→ Stakeholder: Customer</div>
+            <div style="font-size: 9px; color: #4dd4ff;">Signed: ✓ V. Sollozzo</div>
+          </div>
+          <div style="display: flex; align-items: center; color: #4dd4ff;">→</div>
+          <div style="flex:1; background: #0e1419; padding: 11px 13px; border-radius: 6px; border: 1px solid #d24726;">
+            <div style="font-size: 9px; color: #d24726; text-transform: uppercase;">Step 2</div>
+            <div style="font-size: 12px; color: #fff; font-weight: 600; margin: 4px 0;">Operations records</div>
+            <div style="font-size: 9px; color: #d24726;">→ Authority: Michael 100%</div>
+            <div style="font-size: 9px; color: #4dd4ff;">Signed: ✓ Michael</div>
+          </div>
+          <div style="display: flex; align-items: center; color: #4dd4ff;">→</div>
+          <div style="flex:1; background: #0e1419; padding: 11px 13px; border-radius: 6px; border: 1px solid #d24726;">
+            <div style="font-size: 9px; color: #d24726; text-transform: uppercase;">Step 3</div>
+            <div style="font-size: 12px; color: #fff; font-weight: 600; margin: 4px 0;">Operations reports to HR</div>
+            <div style="font-size: 9px; color: #d24726;">→ Authority: Michael 100%</div>
+            <div style="font-size: 9px; color: #4dd4ff;">Signed: ✓ Michael</div>
+          </div>
+          <div style="display: flex; align-items: center; color: #4dd4ff;">→</div>
+          <div style="flex:1; background: #0e1419; padding: 11px 13px; border-radius: 6px; border: 1px solid #4cd964;">
+            <div style="font-size: 9px; color: #4cd964; text-transform: uppercase;">Step 4</div>
+            <div style="font-size: 12px; color: #fff; font-weight: 600; margin: 4px 0;">Sales credited</div>
+            <div style="font-size: 9px; color: #4cd964;">→ Hossam evaluated</div>
+            <div style="font-size: 9px; color: #4dd4ff;">Signed: ✓ Hossam</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px 16px; background: rgba(255,180,0,0.08); border: 1px solid rgba(255,180,0,0.3); border-radius: 6px;">
+          <div style="font-size: 11px; color: #ffb400; font-weight: 700; margin-bottom: 8px;">⚠ Authority Distribution for this KPI</div>
+          <div style="display: flex; gap: 12px;">
+            <div style="flex:1;">
+              <div style="font-size: 18px; font-weight: 800; color: #d24726;">75%</div>
+              <div style="font-size: 9px; color: #888;">Operations (Michael)</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size: 18px; font-weight: 800; color: #4cd964;">25%</div>
+              <div style="font-size: 9px; color: #888;">Sales (Hossam)</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size: 18px; font-weight: 800; color: #fff;">100%</div>
+              <div style="font-size: 9px; color: #888;">Total accountability</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-caption visible">In Hossam's old contract this was just a sentence. Trust 0 makes it a chain of signed accountability.</div>
+    `;
+  });
+
+  // ============================================================
+  // BEAT 6 (42-50 sec): Side-by-side comparison
+  // ============================================================
+  scheduleAt(42000, () => {
+    $('demo-stage-label').textContent = 'Stage 6 of 7 · The Difference';
+    dc.innerHTML = `
+      <div class="demo-title visible">Same KPI. Two universes.</div>
+      <div class="demo-subtitle visible">A sentence vs a chain.</div>
+      <div style="flex:1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+        <div style="background: #fff; border-radius: 10px; padding: 18px 22px; color: #333; opacity: 0.6; filter: grayscale(0.4);">
+          <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Without Trust 0</div>
+          <div style="font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 10px;">Beyond Company KPI · Section 4.3</div>
+          <div style="font-size: 11px; line-height: 1.6; color: #555;">
+            "Collection rate: 80% per quarter, calculated based on customer payment records as reported by Operations Department. Failure to meet this target gives the company the right to terminate."
+          </div>
+          <div style="margin-top: 16px; padding: 8px 12px; background: #ffe8e8; border-left: 3px solid #d24726; border-radius: 4px;">
+            <div style="font-size: 10px; color: #d24726; font-weight: 700;">→ Hossam fired</div>
+            <div style="font-size: 9px; color: #888;">Carrying a number he didn't control</div>
+          </div>
+        </div>
+        <div style="background: #131a22; border-radius: 10px; padding: 18px 22px; color: #fff; border: 2px solid #4dd4ff; box-shadow: 0 0 30px rgba(77,212,255,0.2);">
+          <div style="font-size: 10px; color: #4dd4ff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">With Trust 0</div>
+          <div style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 10px;">Beyond Company KPI · Section 4.3</div>
+          <div style="font-size: 10px; color: #c8d4e0; line-height: 1.5; margin-bottom: 10px;">
+            <strong>Authority chain:</strong> Customer → Ops (Michael 100%) → Ops Report (Michael 100%) → Sales credit (Hossam)
+          </div>
+          <div style="font-size: 10px; color: #c8d4e0; line-height: 1.5;">
+            <strong>Distribution:</strong> Operations 75% · Sales 25%
+          </div>
+          <div style="font-size: 10px; color: #c8d4e0; line-height: 1.5; margin-top: 6px;">
+            <strong>Signatures:</strong> 4 stakeholders · all signed
+          </div>
+          <div style="margin-top: 14px; padding: 8px 12px; background: rgba(76,217,100,0.1); border-left: 3px solid #4cd964; border-radius: 4px;">
+            <div style="font-size: 10px; color: #4cd964; font-weight: 700;">→ Accountability follows authority</div>
+            <div style="font-size: 9px; color: #888;">Hossam −3 · Michael −17</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // ============================================================
+  // BEAT 7 (50-56 sec): Q3 Simulation impact split
+  // ============================================================
+  scheduleAt(50000, () => {
+    $('demo-stage-label').textContent = 'Stage 7 of 7 · Q3 Impact';
+    dc.innerHTML = `
+      <div class="demo-title visible">Q3 played out — Trust 0 distributes the impact.</div>
+      <div class="demo-subtitle visible">Operations delayed collection. Trust 0 saw who did what.</div>
+      <div class="q3-sim-grid" style="margin-top: 14px;">
+        <div class="q3-universe bad">
+          <div class="q3-universe-label">Without Trust 0</div>
+          <div class="q3-line"><span class="label">Collection (reported)</span><span class="v-bad">67%</span></div>
+          <div class="q3-line"><span class="label">Retention</span><span>88%</span></div>
+          <div class="q3-line"><span class="label">Closure</span><span class="v-good">105%</span></div>
+          <div class="q3-impact">
+            <div class="q3-impact-label">Consequence</div>
+            <div class="q3-impact-line"><span class="name">Hossam</span><span class="value bad">−100% · Terminated</span></div>
+            <div class="q3-impact-line"><span class="name">Michael</span><span class="value">No impact</span></div>
+          </div>
+        </div>
+        <div class="q3-universe good">
+          <div class="q3-universe-label">With Trust 0</div>
+          <div class="q3-line"><span class="label">Collection (verified)</span><span class="v-good">84%</span></div>
+          <div class="q3-line"><span class="label">Retention</span><span>88%</span></div>
+          <div class="q3-line"><span class="label">Closure</span><span class="v-good">105%</span></div>
+          <div class="q3-impact">
+            <div class="q3-impact-label">Consequence</div>
+            <div class="q3-impact-line"><span class="name">Hossam</span><span class="value minor">−3 points · Edge cases</span></div>
+            <div class="q3-impact-line"><span class="name">Michael</span><span class="value major">−17 points · Structural</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-caption visible">Trust 0 distributes consequence to where it belongs.</div>
+    `;
+  });
+
+  // ============================================================
+  // BEAT 8 (56-60 sec): Closing tagline
+  // ============================================================
+  scheduleAt(56000, () => {
+    dc.innerHTML = `
+      <div style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="font-size: 56px; font-weight: 200; letter-spacing: 6px; color: #fff; margin-bottom: 18px;">Trust 0</div>
+        <div style="font-size: 18px; color: #4dd4ff; font-style: italic; letter-spacing: 0.5px;">KPI integrity for the people who do the work.</div>
+      </div>
+    `;
+  });
+
+  // End demo → Final closing
+  sceneTimer = scheduleAt(60000, () => {
+    runFinalClosing();
+  });
+}
+
+// =============================================================
+// FINAL CLOSING — Don message + Godfather quote + Logo
+// =============================================================
+function runFinalClosing() {
+  setSceneIndicator('Closing');
+  cancelAllTimeouts();
+
+  $('demo-stage').classList.remove('active');
+  $('closing-stage').classList.add('active');
+
+  // Reset existing closing elements
+  $('closing-1').innerHTML = `
+    <div style="background: #fff; border-radius: 10px; padding: 36px 48px; max-width: 700px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); color: #1a1a1a;">
+      <div style="font-size: 16px; font-weight: 800; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #1a1a1a;">Beyond Company — KPI Agreement · Hossam · Jan 2026</div>
+      <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #555;">Section 4.3 — Collection Rate Target</div>
+      <div style="font-size: 14px; line-height: 1.7; color: #333;">
+        "Collection rate: 80% per quarter, calculated based on customer payment records <span style="background: #fff8dc; padding: 2px 6px; border-bottom: 3px solid #ffd700; font-weight: 700;">as reported by Operations Department</span>. Failure to meet this target gives the company the right to terminate employment."
+      </div>
+      <div style="font-size: 11px; color: #888; margin-top: 18px; padding-top: 12px; border-top: 1px solid #eee;">
+        <em>Signed: Hossam — 12 January 2026</em>
+      </div>
+    </div>
+  `;
+
+  $('closing-2').innerHTML = `
+    <div style="background: #fff; border-radius: 10px; padding: 26px 36px; max-width: 600px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); color: #1a1a1a; margin-bottom: 32px;">
+      <div style="font-size: 11px; color: #888; margin-bottom: 6px;">Section 4.3 — Collection Rate Target</div>
+      <div style="font-size: 11px; line-height: 1.6; color: #555;">
+        "Collection rate: 80%... <span style="background: #fff8dc; padding: 1px 4px; border-bottom: 2px solid #ffd700; font-weight: 700;">as reported by Operations Department</span>... right to terminate."
+      </div>
+    </div>
+    <div class="godfather-quote">"I'm gonna make him an offer he can't refuse."</div>
+    <div class="godfather-attribution" style="margin-top: 20px; font-size: 12px; color: #666; letter-spacing: 2px; text-transform: uppercase;">— The Godfather (1972)</div>
+  `;
+
+  $('closing-3').innerHTML = `
+    <div class="final-logo">Trust 0</div>
+    <div style="margin-top: 20px; font-size: 14px; color: #4dd4ff; font-style: italic; letter-spacing: 0.5px;">KPI integrity for the people who do the work.</div>
+  `;
+
+  // Beat 1 (0-3 sec): KPI document held alone
+  scheduleAt(200, () => {
+    $('closing-1').classList.add('visible');
+  });
+
+  // Beat 2 (3-7 sec): KPI + Godfather quote
+  scheduleAt(3500, () => {
+    $('closing-1').classList.remove('visible');
+    scheduleAt(800, () => {
+      $('closing-1').style.display = 'none';
+      $('closing-2').style.display = 'flex';
+      $('closing-2').style.flexDirection = 'column';
+      $('closing-2').style.alignItems = 'center';
+      scheduleAt(100, () => $('closing-2').classList.add('visible'));
+    });
+  });
+
+  // Beat 3 (8-12 sec): Trust 0 logo
+  scheduleAt(8000, () => {
+    $('closing-2').classList.remove('visible');
+    scheduleAt(800, () => {
+      $('closing-2').style.display = 'none';
+      $('closing-3').style.display = 'block';
+      scheduleAt(100, () => $('closing-3').classList.add('visible'));
+    });
+  });
+}
+
+// =============================================================
+// CONTROLS
+// =============================================================
+// Skip functions removed — pause button replaces them
+
+function nextScene() {
+  cancelAllTimeouts();
+  isPaused = false;
+  // Resume CSS animations
+  document.querySelectorAll('*').forEach(el => { el.style.animationPlayState = ''; });
+  const pb = $('pause-btn'); if (pb) pb.textContent = '⏸';
+
+  // Hide demo and closing stages when navigating to film scenes
+  if (currentScene < 4) {
+    $('demo-stage').classList.remove('active');
+    $('closing-stage').classList.remove('active');
+    $('stage').style.display = 'flex';
+  }
+
+  if (currentScene === 0) { currentScene = 1; runScene1(); }
+  else if (currentScene === 1) { currentScene = 2; runScene2(); }
+  else if (currentScene === 2) { currentScene = 3; runScene3(); }
+  else if (currentScene === 3) {
+    currentScene = 5;
+    $('stage').style.display = 'none';
+    runDemo();
+  }
+  else if (currentScene === 4) {
+    currentScene = 5;
+    $('stage').style.display = 'none';
+    runDemo();
+  }
+  else if (currentScene === 5) {
+    currentScene = 6;
+    runFinalClosing();
+  }
+  else if (currentScene === 6) {
+    // Loop back to start
+    restart();
+  }
+}
+
+function prevScene() {
+  cancelAllTimeouts();
+  isPaused = false;
+  document.querySelectorAll('*').forEach(el => { el.style.animationPlayState = ''; });
+  const pb = $('pause-btn'); if (pb) pb.textContent = '⏸';
+
+  $('demo-stage').classList.remove('active');
+  $('closing-stage').classList.remove('active');
+  $('closing-1').classList.remove('visible');
+  $('closing-2').classList.remove('visible');
+  $('closing-3').classList.remove('visible');
+  $('closing-1').style.display = '';
+  $('closing-2').style.display = 'none';
+  $('closing-3').style.display = 'none';
+  $('stage').style.display = 'flex';
+
+  if (currentScene <= 1) { currentScene = 1; runScene1(); }
+  else if (currentScene === 2) { currentScene = 1; runScene1(); }
+  else if (currentScene === 3) { currentScene = 2; runScene2(); }
+  else if (currentScene === 4) { currentScene = 3; runScene3(); }
+  else if (currentScene === 5) { currentScene = 4; runScene4(); }
+  else if (currentScene === 6) {
+    currentScene = 5;
+    $('stage').style.display = 'none';
+    runDemo();
+  }
+}
+
+function restart() {
+  cancelAllTimeouts();
+  $('demo-stage').classList.remove('active');
+  $('closing-stage').classList.remove('active');
+  $('closing-1').classList.remove('visible');
+  $('closing-2').classList.remove('visible');
+  $('closing-3').classList.remove('visible');
+  $('closing-1').style.display = '';
+  $('closing-2').style.display = 'none';
+  $('closing-3').style.display = 'none';
+  $('stage').style.display = 'flex';
+  $('title-card').classList.remove('hidden');
+  clearBoth();
+  currentScene = 0;
+
+  scheduleAt(3000, () => {
+    $('title-card').classList.add('hidden');
+  });
+  scheduleAt(4000, () => {
+    currentScene = 1;
+    runScene1();
+  });
+}
+
+// Auto-start on load
+window.addEventListener('load', () => {
+  scheduleAt(3000, () => {
+    $('title-card').classList.add('hidden');
+  });
+  scheduleAt(4000, () => {
+    currentScene = 1;
+    runScene1();
+  });
+});
+
+</script>
+</body>
+</html>
